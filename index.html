@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IronCalc Pro - Conversor, Discos & 1RM</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        dark: {
+                            950: '#09090b',
+                            900: '#121215',
+                            800: '#1c1c21',
+                            700: '#27272f',
+                            600: '#383842',
+                        },
+                        gold: {
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #09090b;
+            color: #f4f4f5;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        /* Ocultar flechas de inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* Scrollbar sutil */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121215;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272f;
+            border-radius: 4px;
+        }
+        .plate-shadow {
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), inset 0 -3px 5px rgba(0,0,0,0.5), 3px 0 8px rgba(0,0,0,0.6);
+        }
+        .bar-metallic {
+            background: linear-gradient(180deg, #71717a 0%, #d4d4d8 35%, #52525b 75%, #27272a 100%);
+        }
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.18);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-28 select-none">
+
+    <!-- HEADER SUPERIOR -->
+    <header class="sticky top-0 z-30 bg-dark-950/90 backdrop-blur-md border-b border-dark-800 px-4 py-3">
+        <div class="max-w-xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gold-400 to-amber-600 flex items-center justify-center text-dark-950 font-extrabold shadow-lg shadow-gold-500/20">
+                    <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-tight text-white flex items-center gap-1.5">
+                        IronCalc <span class="text-[10px] font-mono uppercase bg-gold-500/20 text-gold-400 px-1.5 py-0.5 rounded border border-gold-500/30">PRO</span>
+                    </h1>
+                    <p id="header-subtitle" class="text-[11px] text-zinc-400">Conversor simultáneo y carga de discos</p>
+                </div>
+            </div>
+
+            <!-- Botón de conversión rápida global / estado -->
+            <div class="flex items-center gap-2">
+                <span class="text-[11px] text-zinc-400 hidden sm:inline">1 kg = 2.2046 lb</span>
+                <button onclick="openFormulaModal()" class="p-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-zinc-300 border border-dark-700 transition flex items-center gap-1 text-xs font-medium" title="Guía de Fórmulas">
+                    <i data-lucide="book-open" class="w-4 h-4 text-gold-400"></i>
+                    <span class="hidden xs:inline">Fórmulas</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="max-w-xl mx-auto px-4 pt-4 space-y-5">
+
+        <!-- ==========================================
+             SECCIÓN 1: CONVERSOR Y CALCULADORA DE DISCOS
+             ========================================== -->
+        <section id="tab-plates" class="tab-content space-y-5">
+            
+            <!-- TARJETA PRINCIPAL DE PESO Y CONVERSIÓN CON 1 CLIC -->
+            <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                        <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-gold-400"></i>
+                        Peso Objetivo / Conversor Rápido
+                    </label>
+                    <span class="text-[11px] text-gold-400/90 bg-gold-500/10 px-2 py-0.5 rounded-full border border-gold-500/20">
+                        Toca la unidad para convertir
+                    </span>
+                </div>
+
+                <!-- Input Gigante + Botón de Unidad que convierte el valor -->
+                <div class="flex items-stretch gap-2 my-2">
+                    <div class="relative flex-1 bg-dark-950 border border-dark-700 focus-within:border-gold-500 rounded-2xl px-4 py-2.5 flex items-center transition">
+                        <input 
+                            type="number" 
+                            id="main-weight-input" 
+                            value="60" 
+                            step="any"
+                            oninput="handleMainWeightChange()"
+                            class="w-full bg-transparent text-3xl sm:text-4xl font-mono font-bold text-white focus:outline-none"
+                            placeholder="0"
+                        >
+                        <!-- Botones +/- rápidos -->
+                        <div class="flex items-center gap-1 ml-2">
+                            <button onclick="stepMainWeight(-2.5)" class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-700 text-zinc-300 flex items-center justify-center font-mono text-sm active:scale-95 transition">-2.5</button>
+                            <button onclick="stepMainWeight(2.5)" class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-700 text-zinc-300 flex items-center justify-center font-mono text-sm active:scale-95 transition">+2.5</button>
+                        </div>
+                    </div>
+
+                    <!-- BOTÓN INTERACTIVO DE UNIDAD (CONVIERTE EL NÚMERO AL TOCARLO) -->
+                    <button 
+                        onclick="convertMainWeightUnit()" 
+                        id="main-unit-btn"
+                        class="px-5 rounded-2xl bg-gradient-to-b from-gold-400 to-gold-600 text-dark-950 font-extrabold text-xl font-mono flex flex-col items-center justify-center shadow-lg shadow-gold-500/20 active:scale-95 transition group min-w-[82px]"
+                        title="Haz clic para convertir el valor actual entre KG y LB"
+                    >
+                        <div class="flex items-center gap-1">
+                            <span id="main-unit-label">kg</span>
+                            <i data-lucide="refresh-cw" class="w-4 h-4 transition-transform duration-300 group-hover:rotate-180"></i>
+                        </div>
+                        <span class="text-[9px] font-sans font-bold uppercase tracking-tighter opacity-80">Convertir</span>
+                    </button>
+                </div>
+
+                <!-- Barra de Equivalencia Simultánea Instantánea -->
+                <div class="mt-3 pt-3 border-t border-dark-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="text-zinc-400">Equivalencia exacta:</span>
+                        <span id="simultaneous-conv-badge" class="font-mono font-bold text-sm text-white bg-dark-800 px-2.5 py-1 rounded-lg border border-dark-700">
+                            132.28 lb
+                        </span>
+                    </div>
+                    <button onclick="keepNumberSwitchUnit()" class="text-zinc-400 hover:text-gold-400 underline decoration-dotted text-[11px] flex items-center gap-1 transition">
+                        <i data-lucide="repeat" class="w-3 h-3"></i>
+                        Cambiar solo etiqueta (<span id="keep-num-label">60 lb</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- SELECTOR DE MODO DE EQUIPO (Barra, Mancuerna/Libre, Máquina/Discos) -->
+            <div class="bg-dark-900 border border-dark-800 rounded-2xl p-1.5 grid grid-cols-3 gap-1">
+                <button onclick="setEquipmentMode('barbell')" id="mode-btn-barbell" class="equip-mode-btn py-2.5 px-2 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition bg-gold-500 text-dark-950 shadow">
+                    <i data-lucide="dumbbell" class="w-4 h-4"></i>
+                    <span>En Barra</span>
+                </button>
+                <button onclick="setEquipmentMode('machine')" id="mode-btn-machine" class="equip-mode-btn py-2.5 px-2 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition text-zinc-400 hover:text-white">
+                    <i data-lucide="disc" class="w-4 h-4"></i>
+                    <span>Máquina / Discos</span>
+                </button>
+                <button onclick="setEquipmentMode('free')" id="mode-btn-free" class="equip-mode-btn py-2.5 px-2 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition text-zinc-400 hover:text-white">
+                    <i data-lucide="scale" class="w-4 h-4"></i>
+                    <span>Peso Libre</span>
+                </button>
+            </div>
+
+            <!-- VISTA ESPECIAL SI ESTÁ EN MODO "PESO LIBRE / MANCUERNA" -->
+            <div id="free-weight-panel" class="hidden bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4 text-gold-400"></i>
+                    Desglose Rápido de Mancuernas y Peso Libre
+                </h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3.5">
+                        <span class="text-[11px] text-zinc-400 uppercase">1 Mancuerna (Individual)</span>
+                        <div id="free-single-main" class="text-xl font-mono font-bold text-gold-400 mt-1">60.0 kg</div>
+                        <div id="free-single-alt" class="text-xs font-mono text-zinc-400">132.3 lb</div>
+                    </div>
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3.5">
+                        <span class="text-[11px] text-zinc-400 uppercase">Par de Mancuernas (x2)</span>
+                        <div id="free-pair-main" class="text-xl font-mono font-bold text-white mt-1">120.0 kg</div>
+                        <div id="free-pair-alt" class="text-xs font-mono text-zinc-400">264.6 lb</div>
+                    </div>
+                </div>
+                <!-- Tabla rápida de mancuernas comunes de gimnasio -->
+                <div>
+                    <div class="text-xs text-zinc-400 mb-2 font-medium">Equivalencias rápidas de mancuernas de gimnasio (Toca para usar):</div>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 text-xs font-mono" id="quick-dumbbell-grid">
+                        <!-- Llenado por JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DE CONFIGURACIÓN DE BARRA Y DISCOS (Para Modo Barra y Modo Máquina) -->
+            <div id="plate-calculator-container" class="space-y-4">
+
+                <!-- SELECTOR DE BARRA (Oculto si es máquina sin barra, o adaptable a carro inicial) -->
+                <div id="bar-selector-card" class="bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400" id="bar-section-title">Barra en uso</span>
+                            <h4 id="selected-bar-summary" class="text-sm font-bold text-white mt-0.5">Barra Olímpica Estándar · 20 kg (44.1 lb)</h4>
+                        </div>
+                        <button onclick="toggleCustomBarInput()" class="text-xs text-gold-400 hover:underline font-medium flex items-center gap-1">
+                            <i data-lucide="Sliders" class="w-3.5 h-3.5"></i> Personalizar
+                        </button>
+                    </div>
+
+                    <!-- Grid de Barras Predefinidas (Estilo Captura 6) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="bar-presets-grid">
+                        <!-- Renderizado dinámicamente -->
+                    </div>
+
+                    <!-- Input de Barra Personalizada y Collarines -->
+                    <div id="custom-bar-drawer" class="hidden pt-3 border-t border-dark-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-dark-950 p-2.5 rounded-xl border border-dark-700">
+                            <label class="text-[11px] text-zinc-400 block mb-1">Peso Barra / Carro Personalizado</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="custom-bar-weight" value="20" step="0.5" oninput="applyCustomBar()" class="w-full bg-dark-800 text-white font-mono text-sm px-2.5 py-1.5 rounded-lg focus:outline-none">
+                                <button onclick="toggleCustomBarUnit()" id="custom-bar-unit-btn" class="px-2.5 py-1.5 bg-gold-500/20 text-gold-400 border border-gold-500/30 rounded-lg font-mono text-xs font-bold">kg</button>
+                            </div>
+                        </div>
+                        <div class="bg-dark-950 p-2.5 rounded-xl border border-dark-700">
+                            <label class="text-[11px] text-zinc-400 block mb-1">Peso Collarines / Seguros (Por lado)</label>
+                            <div class="flex items-center gap-1">
+                                <button onclick="setCollarWeight(0)" class="collar-btn flex-1 py-1.5 rounded-lg text-xs font-mono bg-gold-500 text-dark-950 font-bold" data-val="0">0 kg</button>
+                                <button onclick="setCollarWeight(1)" class="collar-btn flex-1 py-1.5 rounded-lg text-xs font-mono bg-dark-800 text-zinc-300" data-val="1">1 kg</button>
+                                <button onclick="setCollarWeight(2.5)" class="collar-btn flex-1 py-1.5 rounded-lg text-xs font-mono bg-dark-800 text-zinc-300" data-val="2.5">2.5 kg</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SELECTOR DE UNIDAD DE DISCOS DEL GIMNASIO (CARACTERÍSTICA CLAVE: CARGA CRUZADA) -->
+                <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-dark-800">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-gold-400 flex items-center gap-1">
+                                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                                Unidad de los Discos a Cargar
+                            </span>
+                            <p class="text-[11px] text-zinc-400">Puedes tener tu objetivo en KG y cargar discos en LB (o viceversa)</p>
+                        </div>
+
+                        <!-- Switch KG Plates vs LB Plates -->
+                        <div class="flex bg-dark-950 p-1 rounded-xl border border-dark-700 self-start sm:self-auto">
+                            <button onclick="setPlateInventoryUnit('kg')" id="plate-unit-kg" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950">
+                                Discos en KG
+                            </button>
+                            <button onclick="setPlateInventoryUnit('lb')" id="plate-unit-lb" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white">
+                                Discos en LB
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- VISUALIZADOR GRÁFICO DE LA BARRA (ESTILO CAPTURA 2 Y 4) -->
+                    <div class="relative bg-dark-950 border border-dark-800 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[210px] overflow-hidden">
+                        
+                        <!-- Etiqueta superior de estado de conversión cruzada -->
+                        <div id="cross-unit-alert" class="hidden mb-2 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-medium flex items-center gap-1">
+                            <i data-lucide="shuffle" class="w-3 h-3"></i>
+                            <span id="cross-unit-text">Calculando objetivo en KG usando discos en LB</span>
+                        </div>
+
+                        <!-- Contenedor del Dibujo de la Manga de la Barra -->
+                        <div class="w-full flex items-center justify-center py-4 overflow-x-auto">
+                            <div class="relative flex items-center min-w-[280px] h-40">
+                                <!-- Eje interno de la barra (izquierda) -->
+                                <div class="w-12 h-3.5 bar-metallic rounded-l-full"></div>
+                                <!-- Tope de la manga (Collar interior) -->
+                                <div class="w-3.5 h-11 bar-metallic rounded-sm shadow-md z-10 border-r border-zinc-900"></div>
+                                
+                                <!-- Contenedor de Discos Cargados -->
+                                <div id="visual-plates-stack" class="flex items-center gap-1 px-1 z-20">
+                                    <!-- Discos renderizados por JS -->
+                                </div>
+
+                                <!-- Collarín de seguridad si está activo -->
+                                <div id="visual-collar" class="hidden w-3 h-9 bg-red-600 border border-red-400 rounded-sm z-20 flex items-center justify-center text-[8px] font-mono font-bold text-white">
+                                    C
+                                </div>
+
+                                <!-- Manga exterior libre de la barra -->
+                                <div class="flex-1 min-w-[60px] h-6 bar-metallic rounded-r-md shadow-inner relative">
+                                    <div class="absolute right-3 top-0 bottom-0 w-0.5 bg-zinc-700/60"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen de carga por lado y peso real logrado -->
+                        <div class="w-full pt-3 border-t border-dark-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+                            <div>
+                                <span class="text-xs text-zinc-400" id="per-side-label">Cargar por cada lado:</span>
+                                <span id="per-side-weight" class="ml-1 font-mono font-bold text-base text-gold-400">20 kg (44.1 lb)</span>
+                            </div>
+                            <div class="text-xs font-mono bg-dark-900 px-3 py-1 rounded-lg border border-dark-700">
+                                Total Real: <strong id="actual-loaded-total" class="text-white">60.0 kg / 132.3 lb</strong>
+                                <span id="weight-diff-badge" class="ml-1 text-[11px]"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LISTA DETALLADA DE DISCOS POR LADO (Tarjetas estilo Captura 4) -->
+                    <div class="space-y-2" id="plates-breakdown-list">
+                        <!-- Llenado por JS -->
+                    </div>
+
+                    <!-- SELECTOR DE DISCOS DISPONIBLES EN EL GIMNASIO (Activar/Desactivar) -->
+                    <div class="pt-3 border-t border-dark-800">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <span class="text-xs font-medium text-zinc-400">Discos disponibles en tu gimnasio (toca para activar/desactivar):</span>
+                            <button onclick="resetAvailablePlates()" class="text-[11px] text-gold-400 hover:underline">Activar todos</button>
+                        </div>
+                        <div id="available-plates-toggles" class="flex flex-wrap gap-2">
+                            <!-- Botones circulares de discos con colores IPF -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==========================================
+             SECCIÓN 2: CALCULADORA DE 1RM Y PORCENTAJES
+             ========================================== -->
+        <section id="tab-rm" class="tab-content hidden space-y-5">
+            
+            <!-- TARJETA PRINCIPAL DE CÁLCULO DE 1RM -->
+            <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-4">
+                
+                <!-- Selector de Ejercicio + Botón de Info de Fórmulas -->
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex-1">
+                        <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 block mb-1">Ejercicio Realizado</label>
+                        <select id="rm-exercise-select" onchange="calculate1RM()" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:border-gold-500 focus:outline-none">
+                            <option value="squat">Sentadilla con Barra (Back Squat)</option>
+                            <option value="bench">Press de Banca (Bench Press)</option>
+                            <option value="deadlift">Peso Muerto (Deadlift)</option>
+                            <option value="ohp">Press Militar (Overhead Press)</option>
+                            <option value="row">Remo con Barra (Barbell Row)</option>
+                            <option value="other">Otro Ejercicio Libre / Máquina</option>
+                        </select>
+                    </div>
+                    <div class="pt-5">
+                        <button onclick="openFormulaModal()" class="h-[38px] px-3 rounded-xl bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="help-circle" class="w-4 h-4"></i>
+                            <span>¿Fórmulas?</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Peso Levantado y Repeticiones -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Peso con conversión 1-clic -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-zinc-400">Peso Levantado</label>
+                            <span id="rm-weight-equiv" class="text-[11px] font-mono text-zinc-400">≈ 220.5 lb</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="rm-weight-input" value="100" step="any" oninput="calculate1RM()" class="w-full bg-transparent font-mono text-2xl font-bold text-white focus:outline-none">
+                            <button onclick="convertRMWeightUnit()" id="rm-unit-btn" class="px-3 py-1.5 rounded-lg bg-gold-500 text-dark-950 font-mono font-extrabold text-sm flex items-center gap-1 active:scale-95 transition">
+                                <span id="rm-unit-label">kg</span>
+                                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Repeticiones realizadas -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-3">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs text-zinc-400">Repeticiones (Reps)</label>
+                            <span id="effective-reps-label" class="text-[11px] font-mono text-gold-400">Efectivas: 5</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <input type="number" id="rm-reps-input" value="5" min="1" max="36" oninput="calculate1RM()" class="w-full bg-transparent font-mono text-2xl font-bold text-white focus:outline-none">
+                            <div class="flex gap-1">
+                                <button onclick="stepRMReps(-1)" class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-700 text-white font-mono font-bold">-</button>
+                                <button onclick="stepRMReps(1)" class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-700 text-white font-mono font-bold">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selector RIR (Repeticiones en Reserva - Estilo Captura 8) -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-medium text-zinc-400 flex items-center gap-1">
+                            <span>RIR (Repeticiones en Reserva al terminar la serie)</span>
+                        </label>
+                        <span id="rir-badge" class="text-xs font-mono text-gold-400 font-bold">RIR 0 (Al fallo / RPE 10)</span>
+                    </div>
+                    <div class="grid grid-cols-9 gap-1 bg-dark-950 p-1 rounded-xl border border-dark-800" id="rir-buttons-container">
+                        <!-- Botones 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0 generados por JS -->
+                    </div>
+                </div>
+
+                <!-- Selector de Fórmula y Ajustes de Redondeo / Incremento (Estilo Captura 1) -->
+                <div class="pt-3 border-t border-dark-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-[11px] text-zinc-400 block mb-1">Fórmula de Cálculo</label>
+                        <select id="rm-formula-select" onchange="calculate1RM()" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-2.5 py-2 text-xs font-semibold text-gold-400 focus:outline-none">
+                            <option value="epley">Epley (Estándar Universal)</option>
+                            <option value="brzycki">Brzycki (Precisa &lt;10 reps)</option>
+                            <option value="lander">Lander (Lineal Clásica)</option>
+                            <option value="lombardi">Lombardi (Exponencial)</option>
+                            <option value="mayhew">Mayhew et al. (Resistencia)</option>
+                            <option value="oconner">O'Conner et al.</option>
+                            <option value="wathan">Wathan (Potencia)</option>
+                            <option value="average">Promedio de todas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-zinc-400 block mb-1">Incremento Tabla %</label>
+                        <div class="grid grid-cols-3 gap-1 bg-dark-950 p-1 rounded-xl border border-dark-700">
+                            <button onclick="setRMIncrement(1)" class="rm-inc-btn py-1 rounded-lg text-xs font-mono text-zinc-400" data-inc="1">1%</button>
+                            <button onclick="setRMIncrement(2.5)" class="rm-inc-btn py-1 rounded-lg text-xs font-mono text-zinc-400" data-inc="2.5">2.5%</button>
+                            <button onclick="setRMIncrement(5)" class="rm-inc-btn py-1 rounded-lg text-xs font-mono bg-gold-500 text-dark-950 font-bold" data-inc="5">5%</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-zinc-400 block mb-1">Redondear al más cercano</label>
+                        <div class="grid grid-cols-3 gap-1 bg-dark-950 p-1 rounded-xl border border-dark-700">
+                            <button onclick="setRMRound(0.1)" class="rm-round-btn py-1 rounded-lg text-xs font-mono bg-gold-500 text-dark-950 font-bold" data-rnd="0.1">Exacto</button>
+                            <button onclick="setRMRound(0.5)" class="rm-round-btn py-1 rounded-lg text-xs font-mono text-zinc-400" data-rnd="0.5">0.5</button>
+                            <button onclick="setRMRound(2.5)" class="rm-round-btn py-1 rounded-lg text-xs font-mono text-zinc-400" data-rnd="2.5">2.5</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pequeña Descripción en Vivo de la Fórmula Seleccionada -->
+                <div class="bg-dark-950/80 border border-dark-800 rounded-xl p-3 flex items-start gap-2.5 text-xs">
+                    <i data-lucide="info" class="w-4 h-4 text-gold-400 shrink-0 mt-0.5"></i>
+                    <div>
+                        <div class="font-semibold text-white" id="active-formula-title">Fórmula de Epley: 1RM = Peso × (1 + Reps / 30)</div>
+                        <p class="text-zinc-400 text-[11px] mt-0.5" id="active-formula-desc">
+                            Excelente todoterreno tanto para sentadilla, banca y peso muerto en rangos de 3 a 10 repeticiones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULTADO DESTACADO DE 1RM ESTIMADO -->
+            <div class="bg-gradient-to-r from-dark-900 via-dark-800 to-dark-900 border border-gold-500/40 rounded-2xl p-4 flex items-center justify-between gold-glow">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-gold-400">Tu 1RM Estimado (100%)</span>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span id="rm-result-primary" class="text-3xl sm:text-4xl font-mono font-extrabold text-white">116.7 kg</span>
+                        <span id="rm-result-secondary" class="text-sm font-mono text-zinc-400">/ 257.2 lb</span>
+                    </div>
+                </div>
+                <button onclick="sendWeightToPlates(currentCalculated1RM, rmUnit)" class="px-3.5 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-400 text-dark-950 font-bold text-xs flex items-center gap-1.5 shadow-lg transition active:scale-95">
+                    <i data-lucide="disc" class="w-4 h-4"></i>
+                    <span>Ver Discos</span>
+                </button>
+            </div>
+
+            <!-- SWITCH DE VISTA DE TABLA: POR PORCENTAJES (%) O POR REPETICIONES (1-20 REPS) -->
+            <div class="bg-dark-900 border border-dark-800 rounded-2xl overflow-hidden">
+                <div class="p-3 border-b border-dark-800 flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex bg-dark-950 p-1 rounded-xl border border-dark-700">
+                        <button onclick="setRMTableMode('pct')" id="rm-tab-pct" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gold-500 text-dark-950 transition">
+                            Tabla por % de 1RM
+                        </button>
+                        <button onclick="setRMTableMode('reps')" id="rm-tab-reps" class="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">
+                            Tabla por Repeticiones (1-20)
+                        </button>
+                    </div>
+                    <span class="text-[11px] text-zinc-400">Toca el icono de disco para armar la barra</span>
+                </div>
+
+                <!-- Tabla Dinámica -->
+                <div class="overflow-x-auto max-h-[460px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-dark-950/90 sticky top-0 text-[11px] uppercase text-zinc-400 border-b border-dark-800">
+                            <tr id="rm-table-header">
+                                <th class="py-2.5 px-3">% 1RM</th>
+                                <th class="py-2.5 px-3">Reps Est.</th>
+                                <th class="py-2.5 px-3">Peso Principal</th>
+                                <th class="py-2.5 px-3">Conversión</th>
+                                <th class="py-2.5 px-3 text-right">Barra</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rm-table-body" class="divide-y divide-dark-800/70 text-sm font-mono">
+                            <!-- Generado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==========================================
+             SECCIÓN 3: FUERZA RELATIVA Y COMPOSICIÓN CORPORAL
+             ========================================== -->
+        <section id="tab-strength" class="tab-content hidden space-y-5">
+            
+            <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-4">
+                <div class="flex items-center justify-between border-b border-dark-800 pb-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
+                            <i data-lucide="award" class="w-4 h-4 text-gold-400"></i>
+                            Composición Corporal, Fuerza Relativa y Puntos
+                        </h2>
+                        <p class="text-[11px] text-zinc-400">Calcula DOTS, Wilks, IPF GL y tu nivel según tu peso, masa magra y ejercicio</p>
+                    </div>
+                    <button onclick="toggleStrengthUnit()" id="strength-unit-btn" class="px-3 py-1.5 rounded-xl bg-gold-500 text-dark-950 font-mono font-bold text-xs flex items-center gap-1">
+                        <span id="strength-unit-label">kg</span>
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                    </button>
+                </div>
+
+                <!-- Inputs de Atleta y Ejercicio -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <!-- Género -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-2.5">
+                        <label class="text-[11px] text-zinc-400 block mb-1">Género</label>
+                        <select id="str-gender" onchange="calculateStrengthMetrics()" class="w-full bg-transparent text-sm font-semibold text-white focus:outline-none">
+                            <option value="male" class="bg-dark-900">Masculino</option>
+                            <option value="female" class="bg-dark-900">Femenino</option>
+                        </select>
+                    </div>
+
+                    <!-- Peso Corporal -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-2.5">
+                        <div class="flex justify-between text-[11px] text-zinc-400 mb-1">
+                            <span>Peso Corporal</span>
+                            <span id="str-bw-alt" class="font-mono">165.3 lb</span>
+                        </div>
+                        <input type="number" id="str-bodyweight" value="75" step="0.5" oninput="calculateStrengthMetrics()" class="w-full bg-transparent font-mono text-lg font-bold text-white focus:outline-none">
+                    </div>
+
+                    <!-- Peso Levantado (1RM o Total) -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-2.5 col-span-2 sm:col-span-1">
+                        <div class="flex justify-between text-[11px] text-zinc-400 mb-1">
+                            <span>Peso Levantado (1RM)</span>
+                            <span id="str-lift-alt" class="font-mono text-gold-400">264.6 lb</span>
+                        </div>
+                        <input type="number" id="str-lift-weight" value="120" step="1" oninput="calculateStrengthMetrics()" class="w-full bg-transparent font-mono text-lg font-bold text-gold-400 focus:outline-none">
+                    </div>
+
+                    <!-- Ejercicio Analizado -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-2.5">
+                        <label class="text-[11px] text-zinc-400 block mb-1">Ejercicio / Evento</label>
+                        <select id="str-exercise" onchange="calculateStrengthMetrics()" class="w-full bg-transparent text-xs font-semibold text-white focus:outline-none">
+                            <option value="squat" class="bg-dark-900">Sentadilla (Squat)</option>
+                            <option value="bench" class="bg-dark-900">Press de Banca</option>
+                            <option value="deadlift" class="bg-dark-900">Peso Muerto</option>
+                            <option value="ohp" class="bg-dark-900">Press Militar (OHP)</option>
+                            <option value="total" class="bg-dark-900">Total Powerlifting (S+B+D)</option>
+                        </select>
+                    </div>
+
+                    <!-- Altura (cm) para IMC y FFMI -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-2.5">
+                        <label class="text-[11px] text-zinc-400 block mb-1">Altura (cm)</label>
+                        <input type="number" id="str-height" value="175" step="1" oninput="calculateStrengthMetrics()" class="w-full bg-transparent font-mono text-base font-bold text-white focus:outline-none">
+                    </div>
+
+                    <!-- % Grasa Corporal Estimado -->
+                    <div class="bg-dark-950 border border-dark-700 rounded-xl p-2.5">
+                        <label class="text-[11px] text-zinc-400 block mb-1">% Grasa Corporal</label>
+                        <input type="number" id="str-bodyfat" value="15" min="4" max="50" step="0.5" oninput="calculateStrengthMetrics()" class="w-full bg-transparent font-mono text-base font-bold text-white focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- TARJETA DE NIVEL DE ATLETA Y RATIO PESO CORPORAL -->
+                <div class="bg-dark-950 border border-dark-800 rounded-2xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[11px] text-zinc-400 uppercase">Nivel para este ejercicio</span>
+                            <div id="str-level-badge" class="text-lg font-extrabold text-gold-400">Atleta Intermedio</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[11px] text-zinc-400 uppercase">Ratio Peso Corporal</span>
+                            <div id="str-bw-ratio" class="text-xl font-mono font-bold text-white">1.60x BW</div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de Progreso de Nivel -->
+                    <div class="w-full h-2.5 bg-dark-800 rounded-full overflow-hidden">
+                        <div id="str-level-bar" class="h-full bg-gradient-to-r from-amber-600 via-gold-500 to-emerald-400 transition-all duration-300" style="width: 60%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-mono text-zinc-400">
+                        <span>Principiante</span>
+                        <span>Novato</span>
+                        <span>Intermedio</span>
+                        <span>Avanzado</span>
+                        <span>Élite</span>
+                    </div>
+                </div>
+
+                <!-- RESULTADOS DE COMPOSICIÓN Y COEFICIENTES OFICIALES (Estilo Captura 3) -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center">
+                        <span class="text-[11px] text-zinc-400 block">Puntos DOTS</span>
+                        <span id="score-dots" class="font-mono text-lg font-bold text-gold-400">84.12</span>
+                    </div>
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center">
+                        <span class="text-[11px] text-zinc-400 block">Antiguo Wilks</span>
+                        <span id="score-wilks1" class="font-mono text-lg font-bold text-white">85.40</span>
+                    </div>
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center">
+                        <span class="text-[11px] text-zinc-400 block">Wilks 2 (2020)</span>
+                        <span id="score-wilks2" class="font-mono text-lg font-bold text-white">101.25</span>
+                    </div>
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center">
+                        <span class="text-[11px] text-zinc-400 block">IPF GL Points</span>
+                        <span id="score-ipfgl" class="font-mono text-lg font-bold text-emerald-400">58.90</span>
+                    </div>
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center">
+                        <span class="text-[11px] text-zinc-400 block">Masa Magra (LBM)</span>
+                        <span id="score-lbm" class="font-mono text-base font-bold text-zinc-200">63.8 kg</span>
+                    </div>
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center">
+                        <span class="text-[11px] text-zinc-400 block">Fuerza / Masa Magra</span>
+                        <span id="score-lbm-ratio" class="font-mono text-base font-bold text-amber-300">1.88x LBM</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==========================================
+             SECCIÓN 4: CALCULADORA DE CALENTAMIENTO (WARM-UP)
+             ========================================== -->
+        <section id="tab-warmup" class="tab-content hidden space-y-5">
+            
+            <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-white">Calculadora de Series de Aproximación (Warm-up)</h2>
+                        <p class="text-[11px] text-zinc-400">Prepara el sistema nervioso antes de tu primera serie efectiva</p>
+                    </div>
+                </div>
+
+                <!-- Input del Primer Set de Trabajo -->
+                <div class="bg-dark-950 border border-dark-700 rounded-2xl p-3.5 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400 block">Primer Set Efectivo (Working Set)</span>
+                        <span id="warmup-alt-label" class="text-xs font-mono text-zinc-400">≈ 176.4 lb</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="warmup-target-input" value="80" step="2.5" oninput="renderWarmupTable()" class="w-24 text-right bg-transparent font-mono text-2xl font-bold text-gold-400 focus:outline-none">
+                        <button onclick="convertWarmupUnit()" id="warmup-unit-btn" class="px-3 py-1.5 rounded-xl bg-gold-500 text-dark-950 font-mono font-extrabold text-sm flex items-center gap-1">
+                            <span id="warmup-unit-label">kg</span>
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selector Rápido / Estándar / Pesado (Estilo Captura 7) -->
+                <div class="grid grid-cols-3 gap-1 bg-dark-950 p-1 rounded-xl border border-dark-800">
+                    <button onclick="setWarmupPreset('quick')" id="wu-btn-quick" class="wu-preset-btn py-2 rounded-lg text-xs font-semibold text-zinc-400 transition">
+                        Rápido (3 series)
+                    </button>
+                    <button onclick="setWarmupPreset('standard')" id="wu-btn-standard" class="wu-preset-btn py-2 rounded-lg text-xs font-semibold bg-dark-800 text-white border border-dark-600 transition">
+                        Estándar (4 series)
+                    </button>
+                    <button onclick="setWarmupPreset('heavy')" id="wu-btn-heavy" class="wu-preset-btn py-2 rounded-lg text-xs font-semibold text-zinc-400 transition">
+                        Pesado (5 series)
+                    </button>
+                </div>
+
+                <!-- Tabla de Series de Calentamiento -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[11px] uppercase text-zinc-400 border-b border-dark-800">
+                                <th class="py-2 px-2">% Set</th>
+                                <th class="py-2 px-2">Peso</th>
+                                <th class="py-2 px-2">Reps</th>
+                                <th class="py-2 px-2">Descanso</th>
+                                <th class="py-2 px-2 text-right">Discos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="warmup-rows-body" class="divide-y divide-dark-800 font-mono text-sm">
+                            <!-- Generado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button onclick="addWarmupRow()" class="w-full py-2.5 rounded-xl border border-dashed border-dark-600 hover:border-gold-500 text-xs font-semibold text-zinc-400 hover:text-gold-400 transition flex items-center justify-center gap-1">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Añadir serie de aproximación
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==========================================
+         MODAL EXPLICATIVO DE FÓRMULAS DE 1RM (?)
+         ========================================== -->
+    <div id="formula-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-dark-900 border border-dark-700 rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-dark-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-5 h-5 text-gold-400"></i>
+                    <h3 class="font-bold text-base text-white">Guía de Fórmulas de 1RM</h3>
+                </div>
+                <button onclick="closeFormulaModal()" class="p-1.5 rounded-xl bg-dark-800 text-zinc-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto space-y-3 text-xs leading-relaxed">
+                <p class="text-zinc-300">
+                    Las fórmulas indirectas permiten estimar tu <strong>1RM (Repetición Máxima)</strong> sin necesidad de llegar a un levantamiento máximo real. Al incluir el <strong>RIR (Repeticiones en Reserva)</strong>, la app suma tus repeticiones realizadas + las que dejaste en el tanque para una precisión superior.
+                </p>
+
+                <div class="p-3 rounded-xl bg-dark-950 border border-dark-800 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gold-400 text-sm">1. Fórmula de Epley (1985)</span>
+                        <span class="font-mono text-[11px] bg-dark-800 px-2 py-0.5 rounded text-zinc-300">w × (1 + r / 30)</span>
+                    </div>
+                    <p class="text-zinc-400">La más utilizada en powerlifting. Asume una relación lineal y funciona de forma sobresaliente en rangos de <strong>3 a 10 repeticiones</strong> en ejercicios compuestos.</p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-dark-950 border border-dark-800 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gold-400 text-sm">2. Fórmula de Brzycki (1993)</span>
+                        <span class="font-mono text-[11px] bg-dark-800 px-2 py-0.5 rounded text-zinc-300">w × (36 / (37 - r))</span>
+                    </div>
+                    <p class="text-zinc-400">Sumamente precisa cuando trabajas con <strong>bajas a medias repeticiones (1 a 8 reps)</strong>. A más de 10 repeticiones tiende a sobreestimar el 1RM.</p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-dark-950 border border-dark-800 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gold-400 text-sm">3. Fórmula de Lander (1985)</span>
+                        <span class="font-mono text-[11px] bg-dark-800 px-2 py-0.5 rounded text-zinc-300">(100 × w) / (101.3 - 2.67123 × r)</span>
+                    </div>
+                    <p class="text-zinc-400">Muy similar a Brzycki en rangos cortos, ofreciendo una curva ligeramente más conservadora entre las 5 y 10 repeticiones.</p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-dark-950 border border-dark-800 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gold-400 text-sm">4. Fórmula de Lombardi (1989)</span>
+                        <span class="font-mono text-[11px] bg-dark-800 px-2 py-0.5 rounded text-zinc-300">w × r^0.10</span>
+                    </div>
+                    <p class="text-zinc-400">Usa un modelo exponencial. Es más <strong>conservadora en altas repeticiones</strong>, ideal si sientes que otras fórmulas te dan un 1RM demasiado alto cuando haces más de 10 reps.</p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-dark-950 border border-dark-800 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gold-400 text-sm">5. Fórmula de Mayhew et al. (1992)</span>
+                        <span class="font-mono text-[11px] bg-dark-800 px-2 py-0.5 rounded text-zinc-300">(100 × w) / (52.2 + 41.9 × e^(-0.055×r))</span>
+                    </div>
+                    <p class="text-zinc-400">Desarrollada estudiando la resistencia muscular en press de banca. Mantiene buena precisión incluso en series de <strong>alta repetición (10 a 20 reps)</strong>.</p>
+                </div>
+
+                <div class="p-3 rounded-xl bg-dark-950 border border-dark-800 space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gold-400 text-sm">6. O'Conner & Wathan</span>
+                        <span class="font-mono text-[11px] bg-dark-800 px-2 py-0.5 rounded text-zinc-300">Variantes dinámicas</span>
+                    </div>
+                    <p class="text-zinc-400">O'Conner (<code>w × (1 + 0.025 × r)</code>) es la más prudente para principiantes; Wathan es excelente para atletas explosivos.</p>
+                </div>
+            </div>
+            <div class="p-3 border-t border-dark-800 bg-dark-950">
+                <button onclick="closeFormulaModal()" class="w-full py-2.5 rounded-xl bg-gold-500 text-dark-950 font-bold text-sm">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         BARRA DE NAVEGACIÓN INFERIOR (BOTTOM NAV)
+         ========================================== -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-dark-950/95 backdrop-blur-lg border-t border-dark-800 px-2 py-1.5">
+        <div class="max-w-xl mx-auto grid grid-cols-4 gap-1">
+            <button onclick="switchTab('plates')" id="nav-plates" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl text-gold-400 bg-gold-500/10 transition">
+                <i data-lucide="disc" class="w-5 h-5"></i>
+                <span class="text-[11px] font-bold mt-1">Discos / Conv.</span>
+            </button>
+            <button onclick="switchTab('rm')" id="nav-rm" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl text-zinc-400 hover:text-zinc-200 transition">
+                <i data-lucide="percent" class="w-5 h-5"></i>
+                <span class="text-[11px] font-semibold mt-1">% 1RM</span>
+            </button>
+            <button onclick="switchTab('strength')" id="nav-strength" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl text-zinc-400 hover:text-zinc-200 transition">
+                <i data-lucide="activity" class="w-5 h-5"></i>
+                <span class="text-[11px] font-semibold mt-1">Fuerza / Wilks</span>
+            </button>
+            <button onclick="switchTab('warmup')" id="nav-warmup" class="nav-btn flex flex-col items-center justify-center py-2 rounded-2xl text-zinc-400 hover:text-zinc-200 transition">
+                <i data-lucide="flame" class="w-5 h-5"></i>
+                <span class="text-[11px] font-semibold mt-1">Warm-up</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ==========================================
+         LÓGICA JAVASCRIPT COMPLETA
+         ========================================== -->
+    <script>
+        // Constante oficial de conversión
+        const KG_TO_LB = 2.20462262185;
+
+        // Estado Global de la App
+        let mainUnit = 'kg';           // Unidad del peso objetivo en pestaña 1 ('kg' | 'lb')
+        let equipmentMode = 'barbell'; // 'barbell' | 'machine' | 'free'
+        let plateInventoryUnit = 'kg'; // Unidad de los discos a cargar ('kg' | 'lb')
+        let collarWeightKg = 0;        // Peso del collarín por lado en kg
+
+        // Barras predefinidas
+        const barPresets = [
+            { id: 'olympic20', name: 'Barra Olímpica 20kg', kg: 20, lb: 45, desc: 'Estándar 20 kg / 45 lb' },
+            { id: 'olympic15', name: 'Barra Olímpica 15kg', kg: 15, lb: 35, desc: 'Femenina / 6ft 15 kg / 35 lb' },
+            { id: 'ezbar',     name: 'Barra Z (EZ)',       kg: 7.5, lb: 16.5, desc: 'Curl 7.5 kg / 16.5 lb' },
+            { id: 'ezbar10',   name: 'Barra Z Pesada',     kg: 10, lb: 22, desc: '10 kg / 22 lb' },
+            { id: 'hexbar',    name: 'Barra Hexagonal',    kg: 30, lb: 65, desc: 'Trap Bar 30 kg / 65 lb' },
+            { id: 'nobar',     name: 'Smith / Sin Barra',  kg: 0,  lb: 0,  desc: '0 kg (Solo discos)' }
+        ];
+        let selectedBarId = 'olympic20';
+        let currentBarWeightKg = 20;
+        let customBarUnit = 'kg';
+
+        // Inventarios de Discos con colores IPF / Gimnasio y alturas visuales
+        const platesCatalog = {
+            kg: [
+                { weight: 25,   color: 'bg-red-600 border-red-400 text-white',       badge: 'bg-red-600 text-white',       h: 'h-36', w: 'w-6',   active: true },
+                { weight: 20,   color: 'bg-blue-600 border-blue-400 text-white',     badge: 'bg-blue-600 text-white',      h: 'h-36', w: 'w-5',   active: true },
+                { weight: 15,   color: 'bg-yellow-400 border-yellow-200 text-black', badge: 'bg-yellow-400 text-dark-950', h: 'h-32', w: 'w-5',   active: true },
+                { weight: 10,   color: 'bg-emerald-600 border-emerald-400 text-white',badge: 'bg-emerald-600 text-white',  h: 'h-28', w: 'w-4',   active: true },
+                { weight: 5,    color: 'bg-zinc-100 border-white text-dark-950',     badge: 'bg-zinc-100 text-dark-950',   h: 'h-24', w: 'w-3.5', active: true },
+                { weight: 2.5,  color: 'bg-rose-500 border-rose-300 text-white',     badge: 'bg-rose-500 text-white',      h: 'h-20', w: 'w-3',   active: true },
+                { weight: 1.25, color: 'bg-amber-500 border-amber-300 text-dark-950',badge: 'bg-amber-500 text-dark-950',  h: 'h-16', w: 'w-2.5', active: true }
+            ],
+            lb: [
+                { weight: 45,   color: 'bg-blue-600 border-blue-400 text-white',     badge: 'bg-blue-600 text-white',      h: 'h-36', w: 'w-5',   active: true },
+                { weight: 35,   color: 'bg-yellow-400 border-yellow-200 text-black', badge: 'bg-yellow-400 text-dark-950', h: 'h-32', w: 'w-5',   active: true },
+                { weight: 25,   color: 'bg-emerald-600 border-emerald-400 text-white',badge: 'bg-emerald-600 text-white',  h: 'h-28', w: 'w-4',   active: true },
+                { weight: 10,   color: 'bg-zinc-100 border-white text-dark-950',     badge: 'bg-zinc-100 text-dark-950',   h: 'h-24', w: 'w-3.5', active: true },
+                { weight: 5,    color: 'bg-rose-500 border-rose-300 text-white',     badge: 'bg-rose-500 text-white',      h: 'h-20', w: 'w-3',   active: true },
+                { weight: 2.5,  color: 'bg-amber-500 border-amber-300 text-dark-950',badge: 'bg-amber-500 text-dark-950',  h: 'h-16', w: 'w-2.5', active: true }
+            ]
+        };
+
+        // Estado de Calculadora 1RM
+        let rmUnit = 'kg';
+        let selectedRIR = 0;
+        let rmIncrement = 5;
+        let rmRound = 0.1;
+        let rmTableMode = 'pct'; // 'pct' | 'reps'
+        let currentCalculated1RM = 116.7;
+
+        // Estado Fuerza Relativa
+        let strengthUnit = 'kg';
+
+        // Estado Warmup
+        let warmupUnit = 'kg';
+        let warmupSets = [
+            { pct: 40, reps: 10, rest: '1:00' },
+            { pct: 60, reps: 6,  rest: '1:00' },
+            { pct: 75, reps: 4,  rest: '1:30' },
+            { pct: 90, reps: 2,  rest: '2:00' }
+        ];
+
+        // Utilidades de formato numérico
+        function fmtNum(val, decimals = 2) {
+            if (isNaN(val)) return '0';
+            const rounded = Math.round(val * Math.pow(10, decimals)) / Math.pow(10, decimals);
+            return rounded.toString();
+        }
+
+        function roundToNearest(val, step) {
+            if (!step || step <= 0.1) return Math.round(val * 10) / 10;
+            return Math.round(val / step) * step;
+        }
+
+        // ==========================================
+        // NAVEGACIÓN ENTRE PESTAÑAS
+        // ==========================================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-gold-400', 'bg-gold-500/10');
+                btn.classList.add('text-zinc-400');
+            });
+            const activeBtn = document.getElementById('nav-' + tabId);
+            activeBtn.classList.remove('text-zinc-400');
+            activeBtn.classList.add('text-gold-400', 'bg-gold-500/10');
+
+            const subtitles = {
+                plates: 'Conversor simultáneo y carga de discos',
+                rm: 'Calculadora de 1RM, RIR y tabla de porcentajes',
+                strength: 'Composición corporal, DOTS, Wilks e IPF GL',
+                warmup: 'Series de aproximación inteligentes'
+            };
+            document.getElementById('header-subtitle').textContent = subtitles[tabId] || '';
+        }
+
+        // ==========================================
+        // SECCIÓN 1: CONVERSOR Y DISCOS
+        // ==========================================
+        function handleMainWeightChange() {
+            const val = parseFloat(document.getElementById('main-weight-input').value) || 0;
+            updateSimultaneousBadge(val);
+            calculatePlates();
+            updateFreeWeightBreakdown(val);
+        }
+
+        function updateSimultaneousBadge(val) {
+            const badge = document.getElementById('simultaneous-conv-badge');
+            const keepLabel = document.getElementById('keep-num-label');
+            if (mainUnit === 'kg') {
+                const inLb = val * KG_TO_LB;
+                badge.textContent = `${fmtNum(inLb, 2)} lb`;
+                keepLabel.textContent = `${fmtNum(val, 1)} lb`;
+            } else {
+                const inKg = val / KG_TO_LB;
+                badge.textContent = `${fmtNum(inKg, 2)} kg`;
+                keepLabel.textContent = `${fmtNum(val, 1)} kg`;
+            }
+        }
+
+        // Convierte inmediatamente el número escrito (ej. 35 lb -> 15.88 kg)
+        function convertMainWeightUnit() {
+            const input = document.getElementById('main-weight-input');
+            const currentVal = parseFloat(input.value) || 0;
+            let convertedVal = 0;
+
+            if (mainUnit === 'kg') {
+                mainUnit = 'lb';
+                convertedVal = currentVal * KG_TO_LB;
+            } else {
+                mainUnit = 'kg';
+                convertedVal = currentVal / KG_TO_LB;
+            }
+
+            input.value = fmtNum(convertedVal, 2);
+            document.getElementById('main-unit-label').textContent = mainUnit;
+            handleMainWeightChange();
+        }
+
+        // Cambia solo la etiqueta de unidad manteniendo el mismo número (ej. 60 kg -> 60 lb)
+        function keepNumberSwitchUnit() {
+            mainUnit = (mainUnit === 'kg') ? 'lb' : 'kg';
+            document.getElementById('main-unit-label').textContent = mainUnit;
+            handleMainWeightChange();
+        }
+
+        function stepMainWeight(delta) {
+            const input = document.getElementById('main-weight-input');
+            const current = parseFloat(input.value) || 0;
+            input.value = Math.max(0, fmtNum(current + delta, 2));
+            handleMainWeightChange();
+        }
+
+        function setEquipmentMode(mode) {
+            equipmentMode = mode;
+            document.querySelectorAll('.equip-mode-btn').forEach(btn => {
+                btn.className = 'equip-mode-btn py-2.5 px-2 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition text-zinc-400 hover:text-white';
+            });
+            const active = document.getElementById('mode-btn-' + mode);
+            active.className = 'equip-mode-btn py-2.5 px-2 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition bg-gold-500 text-dark-950 shadow';
+
+            const freePanel = document.getElementById('free-weight-panel');
+            const plateContainer = document.getElementById('plate-calculator-container');
+            const barCard = document.getElementById('bar-selector-card');
+
+            if (mode === 'free') {
+                freePanel.classList.remove('hidden');
+                plateContainer.classList.add('hidden');
+            } else if (mode === 'machine') {
+                freePanel.classList.add('hidden');
+                plateContainer.classList.remove('hidden');
+                // En modo máquina asistida / discos, seleccionamos base 0 kg automáticamente pero dejamos personalizar
+                selectBarPreset('nobar');
+                document.getElementById('bar-section-title').textContent = 'Peso Base de Máquina / Carro';
+            } else {
+                freePanel.classList.add('hidden');
+                plateContainer.classList.remove('hidden');
+                document.getElementById('bar-section-title').textContent = 'Barra en uso';
+                if (selectedBarId === 'nobar') selectBarPreset('olympic20');
+            }
+            handleMainWeightChange();
+        }
+
+        function updateFreeWeightBreakdown(val) {
+            const isKg = mainUnit === 'kg';
+            const altVal = isKg ? val * KG_TO_LB : val / KG_TO_LB;
+            const altUnit = isKg ? 'lb' : 'kg';
+
+            document.getElementById('free-single-main').textContent = `${fmtNum(val, 2)} ${mainUnit}`;
+            document.getElementById('free-single-alt').textContent = `${fmtNum(altVal, 2)} ${altUnit}`;
+
+            document.getElementById('free-pair-main').textContent = `${fmtNum(val * 2, 2)} ${mainUnit}`;
+            document.getElementById('free-pair-alt').textContent = `${fmtNum(altVal * 2, 2)} ${altUnit}`;
+        }
+
+        function renderQuickDumbbellGrid() {
+            const commonLbs = [10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80];
+            const container = document.getElementById('quick-dumbbell-grid');
+            container.innerHTML = commonLbs.map(lb => {
+                const kg = fmtNum(lb / KG_TO_LB, 1);
+                return `
+                    <button onclick="setQuickFreeWeight(${lb}, 'lb')" class="p-2 rounded-xl bg-dark-950 hover:bg-dark-800 border border-dark-800 text-center transition">
+                        <div class="font-bold text-white">${lb} lb</div>
+                        <div class="text-[10px] text-gold-400">${kg} kg</div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setQuickFreeWeight(val, unit) {
+            mainUnit = unit;
+            document.getElementById('main-unit-label').textContent = unit;
+            document.getElementById('main-weight-input').value = val;
+            handleMainWeightChange();
+        }
+
+        // Renderizar tarjetas de selección de barra
+        function renderBarPresets() {
+            const grid = document.getElementById('bar-presets-grid');
+            grid.innerHTML = barPresets.map(bar => {
+                const isSelected = bar.id === selectedBarId;
+                return `
+                    <button onclick="selectBarPreset('${bar.id}')" class="p-2.5 rounded-xl border text-left transition ${isSelected ? 'bg-gold-500/15 border-gold-500 text-white' : 'bg-dark-950 border-dark-800 text-zinc-300 hover:border-dark-600'}">
+                        <div class="font-bold text-xs flex items-center justify-between">
+                            <span>${bar.name}</span>
+                            ${isSelected ? '<span class="w-2 h-2 rounded-full bg-gold-400"></span>' : ''}
+                        </div>
+                        <div class="text-[10px] font-mono text-zinc-400 mt-0.5">${bar.desc}</div>
+                    </button>
+                `;
+            }).join('');
+
+            const currentObj = barPresets.find(b => b.id === selectedBarId);
+            if (currentObj) {
+                document.getElementById('selected-bar-summary').textContent = `${currentObj.name} · ${currentObj.kg} kg (${fmtNum(currentObj.kg * KG_TO_LB, 1)} lb)`;
+            }
+        }
+
+        function selectBarPreset(id) {
+            selectedBarId = id;
+            const found = barPresets.find(b => b.id === id);
+            if (found) {
+                currentBarWeightKg = found.kg;
+                document.getElementById('custom-bar-weight').value = (customBarUnit === 'kg') ? found.kg : fmtNum(found.kg * KG_TO_LB, 1);
+            }
+            renderBarPresets();
+            calculatePlates();
+        }
+
+        function toggleCustomBarInput() {
+            const drawer = document.getElementById('custom-bar-drawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function toggleCustomBarUnit() {
+            const input = document.getElementById('custom-bar-weight');
+            const val = parseFloat(input.value) || 0;
+            if (customBarUnit === 'kg') {
+                customBarUnit = 'lb';
+                input.value = fmtNum(val * KG_TO_LB, 1);
+            } else {
+                customBarUnit = 'kg';
+                input.value = fmtNum(val / KG_TO_LB, 1);
+            }
+            document.getElementById('custom-bar-unit-btn').textContent = customBarUnit;
+            applyCustomBar();
+        }
+
+        function applyCustomBar() {
+            const val = parseFloat(document.getElementById('custom-bar-weight').value) || 0;
+            currentBarWeightKg = (customBarUnit === 'kg') ? val : (val / KG_TO_LB);
+            selectedBarId = 'custom';
+            renderBarPresets();
+            document.getElementById('selected-bar-summary').textContent = `Barra Personalizada · ${fmtNum(currentBarWeightKg, 1)} kg (${fmtNum(currentBarWeightKg * KG_TO_LB, 1)} lb)`;
+            calculatePlates();
+        }
+
+        function setCollarWeight(kgPerSide) {
+            collarWeightKg = kgPerSide;
+            document.querySelectorAll('.collar-btn').forEach(btn => {
+                const v = parseFloat(btn.getAttribute('data-val'));
+                if (v === kgPerSide) {
+                    btn.className = 'collar-btn flex-1 py-1.5 rounded-lg text-xs font-mono bg-gold-500 text-dark-950 font-bold';
+                } else {
+                    btn.className = 'collar-btn flex-1 py-1.5 rounded-lg text-xs font-mono bg-dark-800 text-zinc-300';
+                }
+            });
+            calculatePlates();
+        }
+
+        function setPlateInventoryUnit(unit) {
+            plateInventoryUnit = unit;
+            const btnKg = document.getElementById('plate-unit-kg');
+            const btnLb = document.getElementById('plate-unit-lb');
+            if (unit === 'kg') {
+                btnKg.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950';
+                btnLb.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white';
+            } else {
+                btnLb.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950';
+                btnKg.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white';
+            }
+            renderAvailablePlatesToggles();
+            calculatePlates();
+        }
+
+        function renderAvailablePlatesToggles() {
+            const list = platesCatalog[plateInventoryUnit];
+            const container = document.getElementById('available-plates-toggles');
+            container.innerHTML = list.map((p, idx) => `
+                <button 
+                    onclick="togglePlateAvailability(${idx})" 
+                    class="w-12 h-12 rounded-full font-mono text-xs font-extrabold flex flex-col items-center justify-center border-2 transition ${p.active ? p.color + ' shadow-md scale-100' : 'bg-dark-950 border-dark-700 text-zinc-600 opacity-50 scale-95'}"
+                >
+                    <span>${p.weight}</span>
+                    <span class="text-[9px] font-normal">${plateInventoryUnit}</span>
+                </button>
+            `).join('');
+        }
+
+        function togglePlateAvailability(idx) {
+            platesCatalog[plateInventoryUnit][idx].active = !platesCatalog[plateInventoryUnit][idx].active;
+            renderAvailablePlatesToggles();
+            calculatePlates();
+        }
+
+        function resetAvailablePlates() {
+            platesCatalog[plateInventoryUnit].forEach(p => p.active = true);
+            renderAvailablePlatesToggles();
+            calculatePlates();
+        }
+
+        // CÁLCULO CENTRAL DE DISCOS (SOPORTA OBJETIVO EN KG CON DISCOS EN LB Y VICEVERSA)
+        function calculatePlates() {
+            const rawTarget = parseFloat(document.getElementById('main-weight-input').value) || 0;
+            
+            // Avisar si el objetivo está en una unidad distinta a los discos
+            const crossAlert = document.getElementById('cross-unit-alert');
+            if (mainUnit !== plateInventoryUnit) {
+                crossAlert.classList.remove('hidden');
+                document.getElementById('cross-unit-text').textContent = 
+                    `Objetivo en ${mainUnit.toUpperCase()} (${rawTarget} ${mainUnit}) → Cargando con discos en ${plateInventoryUnit.toUpperCase()}`;
+            } else {
+                crossAlert.classList.add('hidden');
+            }
+
+            // Convertimos todo a la unidad de los discos que se van a cargar en la barra
+            const targetInPlateUnit = (mainUnit === plateInventoryUnit)
+                ? rawTarget
+                : (mainUnit === 'kg' ? rawTarget * KG_TO_LB : rawTarget / KG_TO_LB);
+
+            // Peso de la barra + collarines en la unidad de los discos
+            // Nota: en los gimnasios con discos en LB, la barra olímpica de 20kg se suele contar como 45 lb si es estándar
+            let barAndCollarInPlateUnit = 0;
+            const totalCollarsKg = collarWeightKg * 2;
+            if (plateInventoryUnit === 'kg') {
+                barAndCollarInPlateUnit = currentBarWeightKg + totalCollarsKg;
+            } else {
+                const preset = barPresets.find(b => b.id === selectedBarId);
+                const barLb = preset ? preset.lb : (currentBarWeightKg * KG_TO_LB);
+                barAndCollarInPlateUnit = barLb + (totalCollarsKg * KG_TO_LB);
+            }
+
+            let weightToLoadTotal = Math.max(0, targetInPlateUnit - barAndCollarInPlateUnit);
+            let targetPerSide = weightToLoadTotal / 2;
+
+            // Algoritmo Greedy para elegir los discos por lado
+            const availablePlates = platesCatalog[plateInventoryUnit].filter(p => p.active);
+            const loadedPerSide = [];
+            let remainingSide = targetPerSide + 0.001; // tolerancia coma flotante
+
+            for (const plate of availablePlates) {
+                const count = Math.floor(remainingSide / plate.weight);
+                if (count > 0) {
+                    loadedPerSide.push({ ...plate, count });
+                    remainingSide -= count * plate.weight;
+                }
+            }
+
+            // Calcular peso real cargado por lado
+            const actualSideWeight = loadedPerSide.reduce((acc, p) => acc + (p.weight * p.count), 0);
+            const actualTotalInPlateUnit = barAndCollarInPlateUnit + (actualSideWeight * 2);
+
+            const actualTotalKg = (plateInventoryUnit === 'kg') ? actualTotalInPlateUnit : (actualTotalInPlateUnit / KG_TO_LB);
+            const actualTotalLb = (plateInventoryUnit === 'lb') ? actualTotalInPlateUnit : (actualTotalInPlateUnit * KG_TO_LB);
+
+            // Actualizar etiquetas del visualizador
+            const sideOtherUnit = (plateInventoryUnit === 'kg') ? `${fmtNum(actualSideWeight * KG_TO_LB, 1)} lb` : `${fmtNum(actualSideWeight / KG_TO_LB, 1)} kg`;
+            document.getElementById('per-side-weight').textContent = `${fmtNum(actualSideWeight, 2)} ${plateInventoryUnit} (${sideOtherUnit})`;
+            document.getElementById('actual-loaded-total').textContent = `${fmtNum(actualTotalKg, 1)} kg / ${fmtNum(actualTotalLb, 1)} lb`;
+
+            // Diferencia con el peso objetivo
+            const targetKg = (mainUnit === 'kg') ? rawTarget : (rawTarget / KG_TO_LB);
+            const diffKg = actualTotalKg - targetKg;
+            const diffBadge = document.getElementById('weight-diff-badge');
+            if (Math.abs(diffKg) < 0.15) {
+                diffBadge.innerHTML = `<span class="text-emerald-400">(Exacto)</span>`;
+            } else {
+                const sign = diffKg > 0 ? '+' : '';
+                diffBadge.innerHTML = `<span class="text-amber-400">(${sign}${fmtNum(diffKg, 1)} kg)</span>`;
+            }
+
+            // Dibujar los discos en la barra gráfica
+            const stackContainer = document.getElementById('visual-plates-stack');
+            stackContainer.innerHTML = '';
+
+            if (loadedPerSide.length === 0) {
+                stackContainer.innerHTML = `<span class="text-xs text-zinc-500 font-mono px-3">Sin discos adicionales</span>`;
+            } else {
+                loadedPerSide.forEach(item => {
+                    for (let i = 0; i < Math.min(item.count, 8); i++) {
+                        const plateDiv = document.createElement('div');
+                        plateDiv.className = `${item.h} ${item.w} ${item.color} border rounded-md plate-shadow flex flex-col items-center justify-between py-1.5 font-mono font-extrabold text-[10px] select-none transition-all`;
+                        plateDiv.innerHTML = `
+                            <span class="opacity-40">•</span>
+                            <span class="tracking-tighter">${item.weight}</span>
+                        `;
+                        stackContainer.appendChild(plateDiv);
+                    }
+                });
+            }
+
+            // Mostrar collarín si > 0
+            const collarEl = document.getElementById('visual-collar');
+            if (collarWeightKg > 0) {
+                collarEl.classList.remove('hidden');
+            } else {
+                collarEl.classList.add('hidden');
+            }
+
+            // Renderizar tarjetas de desglose de discos (Estilo Captura 4)
+            const breakdownContainer = document.getElementById('plates-breakdown-list');
+            if (loadedPerSide.length === 0) {
+                breakdownContainer.innerHTML = `
+                    <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center text-xs text-zinc-400">
+                        El peso objetivo es igual o menor al peso de la barra seleccionada.
+                    </div>
+                `;
+            } else {
+                breakdownContainer.innerHTML = loadedPerSide.map(item => {
+                    const totalSidePlate = item.weight * item.count;
+                    const convSingle = (plateInventoryUnit === 'kg')
+                        ? `${fmtNum(item.weight * KG_TO_LB, 1)} lb c/u`
+                        : `${fmtNum(item.weight / KG_TO_LB, 1)} kg c/u`;
+                    return `
+                        <div class="bg-dark-950 border border-dark-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-8 rounded-sm ${item.badge} inline-block"></span>
+                                <div>
+                                    <div class="font-mono font-bold text-base text-white">
+                                        ${item.weight} <span class="text-xs font-normal text-zinc-400">${plateInventoryUnit}</span>
+                                        <span class="text-[11px] font-normal text-zinc-500 ml-1">(${convSingle})</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="font-mono text-sm text-zinc-300">
+                                × <strong class="text-white text-base">${item.count}</strong> por lado
+                            </div>
+                            <div class="font-mono font-bold text-sm text-gold-400">
+                                ${fmtNum(totalSidePlate, 2)} ${plateInventoryUnit}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Enviar cualquier peso directamente a la calculadora de discos
+        function sendWeightToPlates(weightVal, unit) {
+            mainUnit = unit;
+            document.getElementById('main-unit-label').textContent = unit;
+            document.getElementById('main-weight-input').value = fmtNum(weightVal, 1);
+            setEquipmentMode('barbell');
+            switchTab('plates');
+            handleMainWeightChange();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+
+        // ==========================================
+        // SECCIÓN 2: CALCULADORA DE 1RM Y PORCENTAJES
+        // ==========================================
+        const formulaDescriptions = {
+            epley: {
+                title: 'Fórmula de Epley: 1RM = Peso × (1 + Reps / 30)',
+                desc: 'Estándar universal en Powerlifting. Muy equilibrada de 3 a 10 repeticiones en sentadilla, banca y peso muerto.'
+            },
+            brzycki: {
+                title: 'Fórmula de Brzycki: 1RM = Peso × (36 / (37 - Reps))',
+                desc: 'Alta exactitud en series pesadas de 1 a 8 repeticiones. Más exigente si te mantienes bajo 6 reps.'
+            },
+            lander: {
+                title: 'Fórmula de Lander: 1RM = (100 × Peso) / (101.3 - 2.67123 × Reps)',
+                desc: 'Curva lineal muy similar a Brzycki, recomendada para rangos de fuerza máxima e hipertrofia pesada.'
+            },
+            lombardi: {
+                title: 'Fórmula de Lombardi: 1RM = Peso × (Reps ^ 0.10)',
+                desc: 'Enfoque exponencial conservador. Evita inflar el 1RM cuando realizas series de altas repeticiones (>10).'
+            },
+            mayhew: {
+                title: 'Fórmula de Mayhew: 1RM = (100 × Peso) / (52.2 + 41.9 × e^(-0.055 × Reps))',
+                desc: 'Creada con estudios de press de banca; ideal para estimar fuerza a partir de series de resistencia (10 a 20 reps).'
+            },
+            oconner: {
+                title: "Fórmula de O'Conner: 1RM = Peso × (1 + 0.025 × Reps)",
+                desc: 'La fórmula más prudente y segura. Excelente para atletas nuevos o para programar pesos sin riesgo de fallo.'
+            },
+            wathan: {
+                title: 'Fórmula de Wathan: 1RM = (100 × Peso) / (48.8 + 53.8 × e^(-0.075 × Reps))',
+                desc: 'Muy precisa para levantadores explosivos tanto en bajas como en medias repeticiones.'
+            },
+            average: {
+                title: 'Promedio Matemático de las 7 Fórmulas Científicas',
+                desc: 'Combina Epley, Brzycki, Lander, Lombardi, Mayhew, O’Conner y Wathan para darte el consenso más neutro.'
+            }
+        };
+
+        function renderRIRButtons() {
+            const rirValues = [4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0];
+            const container = document.getElementById('rir-buttons-container');
+            container.innerHTML = rirValues.map(val => {
+                const active = val === selectedRIR;
+                return `
+                    <button onclick="setRIR(${val})" class="py-2 rounded-lg font-mono text-xs font-bold transition ${active ? 'bg-gold-500 text-dark-950 shadow' : 'text-zinc-400 hover:text-white'}">
+                        ${val}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setRIR(val) {
+            selectedRIR = val;
+            const rpe = 10 - val;
+            document.getElementById('rir-badge').textContent = `RIR ${val} (RPE ${rpe})`;
+            renderRIRButtons();
+            calculate1RM();
+        }
+
+        function convertRMWeightUnit() {
+            const input = document.getElementById('rm-weight-input');
+            const val = parseFloat(input.value) || 0;
+            if (rmUnit === 'kg') {
+                rmUnit = 'lb';
+                input.value = fmtNum(val * KG_TO_LB, 1);
+            } else {
+                rmUnit = 'kg';
+                input.value = fmtNum(val / KG_TO_LB, 1);
+            }
+            document.getElementById('rm-unit-label').textContent = rmUnit;
+            calculate1RM();
+        }
+
+        function stepRMReps(delta) {
+            const input = document.getElementById('rm-reps-input');
+            const current = parseInt(input.value) || 1;
+            input.value = Math.min(36, Math.max(1, current + delta));
+            calculate1RM();
+        }
+
+        function setRMIncrement(inc) {
+            rmIncrement = inc;
+            document.querySelectorAll('.rm-inc-btn').forEach(btn => {
+                const v = parseFloat(btn.getAttribute('data-inc'));
+                btn.className = (v === inc)
+                    ? 'rm-inc-btn py-1 rounded-lg text-xs font-mono bg-gold-500 text-dark-950 font-bold'
+                    : 'rm-inc-btn py-1 rounded-lg text-xs font-mono text-zinc-400';
+            });
+            calculate1RM();
+        }
+
+        function setRMRound(rnd) {
+            rmRound = rnd;
+            document.querySelectorAll('.rm-round-btn').forEach(btn => {
+                const v = parseFloat(btn.getAttribute('data-rnd'));
+                btn.className = (v === rnd)
+                    ? 'rm-round-btn py-1 rounded-lg text-xs font-mono bg-gold-500 text-dark-950 font-bold'
+                    : 'rm-round-btn py-1 rounded-lg text-xs font-mono text-zinc-400';
+            });
+            calculate1RM();
+        }
+
+        function setRMTableMode(mode) {
+            rmTableMode = mode;
+            const btnPct = document.getElementById('rm-tab-pct');
+            const btnReps = document.getElementById('rm-tab-reps');
+            if (mode === 'pct') {
+                btnPct.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-gold-500 text-dark-950 transition';
+                btnReps.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition';
+            } else {
+                btnReps.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-gold-500 text-dark-950 transition';
+                btnPct.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition';
+            }
+            calculate1RM();
+        }
+
+        // Evalúa una fórmula para peso w y repeticiones efectivas r
+        function eval1RMFormula(formula, w, r) {
+            if (r <= 1) return w;
+            const epley    = w * (1 + r / 30);
+            const brzycki  = w * (36 / Math.max(1, 37 - r));
+            const lander   = (100 * w) / Math.max(10, 101.3 - 2.67123 * r);
+            const lombardi = w * Math.pow(r, 0.10);
+            const mayhew   = (100 * w) / (52.2 + 41.9 * Math.exp(-0.055 * r));
+            const oconner  = w * (1 + 0.025 * r);
+            const wathan   = (100 * w) / (48.8 + 53.8 * Math.exp(-0.075 * r));
+
+            switch (formula) {
+                case 'epley': return epley;
+                case 'brzycki': return brzycki;
+                case 'lander': return lander;
+                case 'lombardi': return lombardi;
+                case 'mayhew': return mayhew;
+                case 'oconner': return oconner;
+                case 'wathan': return wathan;
+                case 'average': return (epley + brzycki + lander + lombardi + mayhew + oconner + wathan) / 7;
+                default: return epley;
+            }
+        }
+
+        // Calcula el peso para N repeticiones dado un 1RM según la fórmula activa
+        function weightForReps(formula, oneRM, r) {
+            if (r <= 1) return oneRM;
+            const factor = eval1RMFormula(formula, 1, r);
+            return oneRM / factor;
+        }
+
+        function calculate1RM() {
+            const weight = parseFloat(document.getElementById('rm-weight-input').value) || 0;
+            const repsInput = parseFloat(document.getElementById('rm-reps-input').value) || 1;
+            const effectiveReps = repsInput + selectedRIR;
+            const formula = document.getElementById('rm-formula-select').value;
+
+            // Actualizar textos auxiliares
+            const otherUnit = rmUnit === 'kg' ? 'lb' : 'kg';
+            const weightOther = rmUnit === 'kg' ? weight * KG_TO_LB : weight / KG_TO_LB;
+            document.getElementById('rm-weight-equiv').textContent = `≈ ${fmtNum(weightOther, 1)} ${otherUnit}`;
+            document.getElementById('effective-reps-label').textContent = `Efectivas: ${effectiveReps}`;
+
+            // Actualizar descripción de fórmula
+            const fInfo = formulaDescriptions[formula] || formulaDescriptions.epley;
+            document.getElementById('active-formula-title').textContent = fInfo.title;
+            document.getElementById('active-formula-desc').textContent = fInfo.desc;
+
+            // Calcular 1RM
+            const raw1RM = eval1RMFormula(formula, weight, effectiveReps);
+            currentCalculated1RM = roundToNearest(raw1RM, rmRound);
+            const secondary1RM = rmUnit === 'kg' ? currentCalculated1RM * KG_TO_LB : currentCalculated1RM / KG_TO_LB;
+
+            document.getElementById('rm-result-primary').textContent = `${fmtNum(currentCalculated1RM, 1)} ${rmUnit}`;
+            document.getElementById('rm-result-secondary').textContent = `/ ${fmtNum(secondary1RM, 1)} ${otherUnit}`;
+
+            // Renderizar Tabla según el modo seleccionado
+            const thead = document.getElementById('rm-table-header');
+            const tbody = document.getElementById('rm-table-body');
+            tbody.innerHTML = '';
+
+            if (rmTableMode === 'pct') {
+                thead.innerHTML = `
+                    <th class="py-2.5 px-3">% 1RM</th>
+                    <th class="py-2.5 px-3">Reps Est.</th>
+                    <th class="py-2.5 px-3">Peso (${rmUnit})</th>
+                    <th class="py-2.5 px-3">En ${otherUnit}</th>
+                    <th class="py-2.5 px-3 text-right">Cargar</th>
+                `;
+                for (let pct = 100; pct >= 50; pct -= rmIncrement) {
+                    const wMain = roundToNearest(currentCalculated1RM * (pct / 100), rmRound);
+                    const wOther = rmUnit === 'kg' ? wMain * KG_TO_LB : wMain / KG_TO_LB;
+                    const estReps = Math.max(1, Math.round(30 * ((100 / pct) - 1)));
+                    const is100 = pct === 100;
+
+                    tbody.innerHTML += `
+                        <tr class="${is100 ? 'bg-gold-500/10' : 'hover:bg-dark-800/50'} transition">
+                            <td class="py-2.5 px-3 font-bold ${is100 ? 'text-gold-400' : 'text-white'}">${fmtNum(pct, 1)}%</td>
+                            <td class="py-2.5 px-3 text-zinc-400">${pct === 100 ? '1 RM' : '~' + estReps + ' reps'}</td>
+                            <td class="py-2.5 px-3 font-bold text-white">${fmtNum(wMain, 1)} ${rmUnit}</td>
+                            <td class="py-2.5 px-3 text-zinc-400">${fmtNum(wOther, 1)} ${otherUnit}</td>
+                            <td class="py-2.5 px-3 text-right">
+                                <button onclick="sendWeightToPlates(${wMain}, '${rmUnit}')" class="p-1.5 rounded-lg bg-dark-800 hover:bg-gold-500 hover:text-dark-950 text-gold-400 transition" title="Ver discos en barra">
+                                    <i data-lucide="disc" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } else {
+                // Modo Por Repeticiones (1 a 20 RM, Estilo Captura 5)
+                thead.innerHTML = `
+                    <th class="py-2.5 px-3">Reps</th>
+                    <th class="py-2.5 px-3">Peso Max (${rmUnit})</th>
+                    <th class="py-2.5 px-3">En ${otherUnit}</th>
+                    <th class="py-2.5 px-3">% 1RM</th>
+                    <th class="py-2.5 px-3 text-right">Cargar</th>
+                `;
+                for (let r = 1; r <= 20; r++) {
+                    const wMain = roundToNearest(weightForReps(formula, currentCalculated1RM, r), rmRound);
+                    const wOther = rmUnit === 'kg' ? wMain * KG_TO_LB : wMain / KG_TO_LB;
+                    const pct = Math.round((wMain / currentCalculated1RM) * 100);
+                    const isCurrentRep = Math.round(effectiveReps) === r;
+
+                    tbody.innerHTML += `
+                        <tr class="${isCurrentRep ? 'bg-gold-500/15 border-l-2 border-gold-400' : 'hover:bg-dark-800/50'} transition">
+                            <td class="py-2.5 px-3 font-bold ${isCurrentRep ? 'text-gold-400' : 'text-white'}">${r} RM</td>
+                            <td class="py-2.5 px-3 font-bold text-white">${fmtNum(wMain, 1)} ${rmUnit}</td>
+                            <td class="py-2.5 px-3 text-zinc-400">${fmtNum(wOther, 1)} ${otherUnit}</td>
+                            <td class="py-2.5 px-3 text-amber-400">${pct}%</td>
+                            <td class="py-2.5 px-3 text-right">
+                                <button onclick="sendWeightToPlates(${wMain}, '${rmUnit}')" class="p-1.5 rounded-lg bg-dark-800 hover:bg-gold-500 hover:text-dark-950 text-gold-400 transition">
+                                    <i data-lucide="disc" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+            lucide.createIcons();
+        }
+
+        function openFormulaModal() {
+            document.getElementById('formula-modal').classList.remove('hidden');
+        }
+        function closeFormulaModal() {
+            document.getElementById('formula-modal').classList.add('hidden');
+        }
+
+
+        // ==========================================
+        // SECCIÓN 3: FUERZA RELATIVA Y COMPOSICIÓN CORPORAL
+        // ==========================================
+        function toggleStrengthUnit() {
+            const bwInput = document.getElementById('str-bodyweight');
+            const liftInput = document.getElementById('str-lift-weight');
+            const bwVal = parseFloat(bwInput.value) || 0;
+            const liftVal = parseFloat(liftInput.value) || 0;
+
+            if (strengthUnit === 'kg') {
+                strengthUnit = 'lb';
+                bwInput.value = fmtNum(bwVal * KG_TO_LB, 1);
+                liftInput.value = fmtNum(liftVal * KG_TO_LB, 1);
+            } else {
+                strengthUnit = 'kg';
+                bwInput.value = fmtNum(bwVal / KG_TO_LB, 1);
+                liftInput.value = fmtNum(liftVal / KG_TO_LB, 1);
+            }
+            document.getElementById('strength-unit-label').textContent = strengthUnit;
+            calculateStrengthMetrics();
+        }
+
+        function calculateStrengthMetrics() {
+            const gender = document.getElementById('str-gender').value;
+            const rawBw = parseFloat(document.getElementById('str-bodyweight').value) || 70;
+            const rawLift = parseFloat(document.getElementById('str-lift-weight').value) || 100;
+            const exercise = document.getElementById('str-exercise').value;
+            const heightCm = parseFloat(document.getElementById('str-height').value) || 175;
+            const bfPct = parseFloat(document.getElementById('str-bodyfat').value) || 15;
+
+            // Convertir a KG para las fórmulas oficiales de Powerlifting
+            const bwKg = (strengthUnit === 'kg') ? rawBw : (rawBw / KG_TO_LB);
+            const liftKg = (strengthUnit === 'kg') ? rawLift : (rawLift / KG_TO_LB);
+
+            // Mostrar equivalencias en tarjeta
+            const otherUnit = strengthUnit === 'kg' ? 'lb' : 'kg';
+            const bwOther = strengthUnit === 'kg' ? rawBw * KG_TO_LB : rawBw / KG_TO_LB;
+            const liftOther = strengthUnit === 'kg' ? rawLift * KG_TO_LB : rawLift / KG_TO_LB;
+            document.getElementById('str-bw-alt').textContent = `${fmtNum(bwOther, 1)} ${otherUnit}`;
+            document.getElementById('str-lift-alt').textContent = `${fmtNum(liftOther, 1)} ${otherUnit}`;
+
+            // Masa Magra (LBM)
+            const lbmKg = bwKg * (1 - (bfPct / 100));
+            const lbmDisplay = strengthUnit === 'kg' ? `${fmtNum(lbmKg, 1)} kg` : `${fmtNum(lbmKg * KG_TO_LB, 1)} lb`;
+            document.getElementById('score-lbm').textContent = lbmDisplay;
+
+            const ratioBW = liftKg / Math.max(30, bwKg);
+            const ratioLBM = liftKg / Math.max(25, lbmKg);
+            document.getElementById('str-bw-ratio').textContent = `${fmtNum(ratioBW, 2)}x BW`;
+            document.getElementById('score-lbm-ratio').textContent = `${fmtNum(ratioLBM, 2)}x LBM`;
+
+            // Cálculo oficial de DOTS
+            const x = Math.min(210, Math.max(40, bwKg));
+            let dotsDenom = 1;
+            if (gender === 'male') {
+                dotsDenom = -307.75076 + 24.0900756*x - 0.1918759221*Math.pow(x,2) + 0.0007391293*Math.pow(x,3) - 0.000001093*Math.pow(x,4);
+            } else {
+                dotsDenom = -57.96288 + 13.6175032*x - 0.1126655495*Math.pow(x,2) + 0.0005158568*Math.pow(x,3) - 0.0000010706*Math.pow(x,4);
+            }
+            const dotsScore = (500 / dotsDenom) * liftKg;
+
+            // Cálculo oficial de Antiguo Wilks
+            let wilksDenom = 1;
+            if (gender === 'male') {
+                wilksDenom = -216.0475144 + 16.2606339*x - 0.002388645*Math.pow(x,2) - 0.00113732*Math.pow(x,3) + 7.01863E-06*Math.pow(x,4) - 1.291E-08*Math.pow(x,5);
+            } else {
+                wilksDenom = 594.31747775582 - 27.23842536447*x + 0.82112226871*Math.pow(x,2) - 0.00930733913*Math.pow(x,3) + 4.731582E-05*Math.pow(x,4) - 9.054E-08*Math.pow(x,5);
+            }
+            const wilks1Score = (500 / wilksDenom) * liftKg;
+            const wilks2Score = wilks1Score * 1.185; // Escala Wilks 2020 (base 600)
+
+            // Cálculo IPF GL Points (Clásico Raw)
+            const ipfParams = gender === 'male'
+                ? { A: 1199.72839, B: 1025.18162, C: 0.00921 }
+                : { A: 610.32796,  B: 1045.59282, C: 0.03048 };
+            const ipfGlScore = liftKg * (100 / (ipfParams.A - ipfParams.B * Math.exp(-ipfParams.C * x)));
+
+            document.getElementById('score-dots').textContent = fmtNum(dotsScore, 2);
+            document.getElementById('score-wilks1').textContent = fmtNum(wilks1Score, 2);
+            document.getElementById('score-wilks2').textContent = fmtNum(wilks2Score, 2);
+            document.getElementById('score-ipfgl').textContent = fmtNum(ipfGlScore, 2);
+
+            // Evaluación del Nivel del Atleta según Ejercicio y Género (Ratios de Peso Corporal)
+            const standards = {
+                male: {
+                    squat:    [0.8, 1.2, 1.6, 2.1, 2.6],
+                    bench:    [0.6, 0.9, 1.25, 1.6, 2.0],
+                    deadlift: [1.0, 1.5, 2.0, 2.5, 3.0],
+                    ohp:      [0.4, 0.6, 0.8, 1.05, 1.3],
+                    total:    [2.4, 3.6, 4.8, 6.2, 7.5]
+                },
+                female: {
+                    squat:    [0.5, 0.85, 1.2, 1.6, 2.0],
+                    bench:    [0.35, 0.55, 0.8, 1.1, 1.4],
+                    deadlift: [0.65, 1.05, 1.45, 1.9, 2.35],
+                    ohp:      [0.25, 0.4, 0.55, 0.75, 0.95],
+                    total:    [1.5, 2.4, 3.4, 4.5, 5.6]
+                }
+            };
+
+            const tiers = standards[gender][exercise];
+            let levelName = 'Principiante';
+            let pctBar = 18;
+
+            if (ratioBW >= tiers[4]) { levelName = 'Élite Internacional'; pctBar = 98; }
+            else if (ratioBW >= tiers[3]) { levelName = 'Atleta Avanzado'; pctBar = 80; }
+            else if (ratioBW >= tiers[2]) { levelName = 'Atleta Intermedio'; pctBar = 60; }
+            else if (ratioBW >= tiers[1]) { levelName = 'Novato Sólido'; pctBar = 38; }
+
+            document.getElementById('str-level-badge').textContent = levelName;
+            document.getElementById('str-level-bar').style.width = pctBar + '%';
+        }
+
+
+        // ==========================================
+        // SECCIÓN 4: CALCULADORA DE CALENTAMIENTO (WARM-UP)
+        // ==========================================
+        function convertWarmupUnit() {
+            const input = document.getElementById('warmup-target-input');
+            const val = parseFloat(input.value) || 0;
+            if (warmupUnit === 'kg') {
+                warmupUnit = 'lb';
+                input.value = fmtNum(val * KG_TO_LB, 1);
+            } else {
+                warmupUnit = 'kg';
+                input.value = fmtNum(val / KG_TO_LB, 1);
+            }
+            document.getElementById('warmup-unit-label').textContent = warmupUnit;
+            renderWarmupTable();
+        }
+
+        function setWarmupPreset(type) {
+            document.querySelectorAll('.wu-preset-btn').forEach(btn => {
+                btn.className = 'wu-preset-btn py-2 rounded-lg text-xs font-semibold text-zinc-400 transition';
+            });
+            document.getElementById('wu-btn-' + type).className = 'wu-preset-btn py-2 rounded-lg text-xs font-semibold bg-dark-800 text-white border border-dark-600 transition';
+
+            if (type === 'quick') {
+                warmupSets = [
+                    { pct: 50, reps: 8, rest: '1:00' },
+                    { pct: 70, reps: 4, rest: '1:00' },
+                    { pct: 85, reps: 2, rest: '1:30' }
+                ];
+            } else if (type === 'standard') {
+                warmupSets = [
+                    { pct: 40, reps: 10, rest: '1:00' },
+                    { pct: 60, reps: 6,  rest: '1:00' },
+                    { pct: 75, reps: 4,  rest: '1:30' },
+                    { pct: 90, reps: 2,  rest: '2:00' }
+                ];
+            } else {
+                warmupSets = [
+                    { pct: 35, reps: 10, rest: '1:00' },
+                    { pct: 55, reps: 6,  rest: '1:00' },
+                    { pct: 70, reps: 4,  rest: '1:30' },
+                    { pct: 82, reps: 2,  rest: '2:00' },
+                    { pct: 92, reps: 1,  rest: '2:30' }
+                ];
+            }
+            renderWarmupTable();
+        }
+
+        function renderWarmupTable() {
+            const target = parseFloat(document.getElementById('warmup-target-input').value) || 0;
+            const otherUnit = warmupUnit === 'kg' ? 'lb' : 'kg';
+            const targetOther = warmupUnit === 'kg' ? target * KG_TO_LB : target / KG_TO_LB;
+            document.getElementById('warmup-alt-label').textContent = `≈ ${fmtNum(targetOther, 1)} ${otherUnit}`;
+
+            const tbody = document.getElementById('warmup-rows-body');
+            tbody.innerHTML = warmupSets.map((set, idx) => {
+                const step = warmupUnit === 'kg' ? 2.5 : 5;
+                const setWeight = roundToNearest(target * (set.pct / 100), step);
+                const otherWeight = warmupUnit === 'kg' ? setWeight * KG_TO_LB : setWeight / KG_TO_LB;
+
+                return `
+                    <tr class="hover:bg-dark-800/40">
+                        <td class="py-2.5 px-2">
+                            <div class="flex items-center gap-1">
+                                <input type="number" value="${set.pct}" onchange="updateWarmupSet(${idx}, 'pct', this.value)" class="w-12 bg-dark-950 border border-dark-700 rounded-lg px-1.5 py-1 text-center text-gold-400 font-bold">
+                                <span class="text-xs text-zinc-500">%</span>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-2">
+                            <div class="font-bold text-white">${fmtNum(setWeight, 1)} ${warmupUnit}</div>
+                            <div class="text-[10px] text-zinc-400">${fmtNum(otherWeight, 1)} ${otherUnit}</div>
+                        </td>
+                        <td class="py-2.5 px-2">
+                            <input type="number" value="${set.reps}" onchange="updateWarmupSet(${idx}, 'reps', this.value)" class="w-12 bg-dark-950 border border-dark-700 rounded-lg px-1.5 py-1 text-center text-white">
+                        </td>
+                        <td class="py-2.5 px-2 text-xs text-zinc-400">${set.rest}</td>
+                        <td class="py-2.5 px-2 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <button onclick="sendWeightToPlates(${setWeight}, '${warmupUnit}')" class="p-1.5 rounded-lg bg-dark-800 hover:bg-gold-500 hover:text-dark-950 text-gold-400 transition" title="Ver discos">
+                                    <i data-lucide="disc" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="removeWarmupRow(${idx})" class="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 transition">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function updateWarmupSet(idx, field, value) {
+            warmupSets[idx][field] = parseFloat(value) || 0;
+            renderWarmupTable();
+        }
+
+        function addWarmupRow() {
+            warmupSets.push({ pct: 85, reps: 2, rest: '1:30' });
+            renderWarmupTable();
+        }
+
+        function removeWarmupRow(idx) {
+            if (warmupSets.length <= 1) return;
+            warmupSets.splice(idx, 1);
+            renderWarmupTable();
+        }
+
+        // Inicialización al cargar la página
+        window.onload = function() {
+            lucide.createIcons();
+            renderBarPresets();
+            renderAvailablePlatesToggles();
+            renderQuickDumbbellGrid();
+            renderRIRButtons();
+            handleMainWeightChange();
+            calculate1RM();
+            calculateStrengthMetrics();
+            renderWarmupTable();
+        };
+    </script>
+</body>
+</html>
