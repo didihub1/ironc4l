@@ -115,8 +115,21 @@
             
             <!-- COLUMNA IZQUIERDA: CONTROLES DE ENTRADA -->
             <div class="space-y-5 md:sticky md:top-20">
-                <!-- TARJETA PRINCIPAL DE PESO Y CONVERSIÓN CON 1 CLIC -->
-                <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
+
+                <!-- SELECTOR DE FLUJO: PESO -> DISCOS vs DISCOS -> PESO (ARMAR BARRA) -->
+                <div class="bg-dark-900 border border-dark-800 rounded-2xl p-1.5 grid grid-cols-2 gap-1.5 shadow-lg">
+                    <button onclick="setCalcDirection('targetToPlates')" id="dir-btn-target" class="py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition bg-gold-500 text-dark-950 shadow">
+                        <i data-lucide="calculator" class="w-4 h-4"></i>
+                        <span>Peso → Discos</span>
+                    </button>
+                    <button onclick="setCalcDirection('platesToTarget')" id="dir-btn-reverse" class="py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition text-zinc-400 hover:text-white">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Discos → Peso (Armar)</span>
+                    </button>
+                </div>
+
+                <!-- TARJETA PRINCIPAL DE PESO Y CONVERSIÓN CON 1 CLIC (MODO PESO -> DISCOS) -->
+                <div id="target-weight-card" class="bg-dark-900 border border-dark-800 rounded-2xl p-4 shadow-xl relative overflow-hidden">
                     <div class="flex items-center justify-between mb-2">
                         <label class="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
                             <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-gold-400"></i>
@@ -173,8 +186,41 @@
                     </div>
                 </div>
 
+                <!-- TARJETA INTERACTIVA PARA MODO INVERSO: ARMAR BARRA (DISCOS -> PESO) -->
+                <div id="reverse-builder-card" class="hidden bg-dark-900 border border-gold-500/30 rounded-2xl p-4 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-dark-800 pb-3">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-gold-400 flex items-center gap-1.5">
+                                <i data-lucide="layers" class="w-4 h-4"></i>
+                                Armar Barra Manualmente (Por Lado)
+                            </h3>
+                            <p class="text-[11px] text-zinc-400 mt-0.5">Toca cualquier disco en KG o LB para cargarlo a cada lado</p>
+                        </div>
+                        <button onclick="clearCustomBarPlates()" class="px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 text-xs font-semibold flex items-center gap-1 transition active:scale-95">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            <span>Vaciar</span>
+                        </button>
+                    </div>
+
+                    <!-- Botones de Discos en KG para agregar -->
+                    <div>
+                        <div class="text-[11px] font-mono font-semibold text-zinc-400 mb-2 flex items-center justify-between">
+                            <span>+ AGREGAR DISCO EN KILOS (KG) POR LADO:</span>
+                        </div>
+                        <div id="reverse-add-kg-grid" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <!-- Botones de Discos en LB para agregar -->
+                    <div class="pt-2 border-t border-dark-800/80">
+                        <div class="text-[11px] font-mono font-semibold text-zinc-400 mb-2 flex items-center justify-between">
+                            <span>+ AGREGAR DISCO EN LIBRAS (LB) POR LADO:</span>
+                        </div>
+                        <div id="reverse-add-lb-grid" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
                 <!-- SELECTOR DE MODO DE EQUIPO -->
-                <div class="bg-dark-900 border border-dark-800 rounded-2xl p-1.5 grid grid-cols-3 gap-1">
+                <div id="equipment-mode-selector" class="bg-dark-900 border border-dark-800 rounded-2xl p-1.5 grid grid-cols-3 gap-1">
                     <button onclick="setEquipmentMode('barbell')" id="mode-btn-barbell" class="equip-mode-btn py-2.5 px-2 rounded-xl text-xs font-semibold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition bg-gold-500 text-dark-950 shadow">
                         <i data-lucide="dumbbell" class="w-4 h-4"></i>
                         <span>En Barra</span>
@@ -249,18 +295,19 @@
                         </div>
                     </div>
 
-                    <!-- SELECTOR DE UNIDAD DE DISCOS (CARGA CRUZADA) Y DISCOS ACTIVOS -->
-                    <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-dark-800">
+                    <!-- SELECTOR DE UNIDAD DE DISCOS (CARGA CRUZADA O MIXTA) Y DISCOS ACTIVOS -->
+                    <div id="inventory-settings-card" class="bg-dark-900 border border-dark-800 rounded-2xl p-4 space-y-4">
+                        <div class="flex flex-col gap-2.5 pb-3 border-b border-dark-800">
                             <div>
                                 <span class="text-xs font-semibold uppercase tracking-wider text-gold-400 flex items-center gap-1">
                                     <i data-lucide="layers" class="w-3.5 h-3.5"></i> Unidad de los Discos a Cargar
                                 </span>
-                                <p class="text-[11px] text-zinc-400">Objetivo en KG y discos en LB (o viceversa)</p>
+                                <p class="text-[11px] text-zinc-400">Elige un sistema o combina discos de KG y LB para máxima exactitud</p>
                             </div>
-                            <div class="flex bg-dark-950 p-1 rounded-xl border border-dark-700 self-start sm:self-auto">
-                                <button onclick="setPlateInventoryUnit('kg')" id="plate-unit-kg" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950">Discos en KG</button>
-                                <button onclick="setPlateInventoryUnit('lb')" id="plate-unit-lb" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white">Discos en LB</button>
+                            <div class="grid grid-cols-3 bg-dark-950 p-1 rounded-xl border border-dark-700 gap-1">
+                                <button onclick="setPlateInventoryUnit('kg')" id="plate-unit-kg" class="py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950">Discos KG</button>
+                                <button onclick="setPlateInventoryUnit('lb')" id="plate-unit-lb" class="py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white">Discos LB</button>
+                                <button onclick="setPlateInventoryUnit('mixed')" id="plate-unit-mixed" class="py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white">Mixtos KG+LB</button>
                             </div>
                         </div>
                         <div>
@@ -268,7 +315,7 @@
                                 <span class="text-xs font-medium text-zinc-400">Discos disponibles en tu gimnasio:</span>
                                 <button onclick="resetAvailablePlates()" class="text-[11px] text-gold-400 hover:underline">Activar todos</button>
                             </div>
-                            <div id="available-plates-toggles" class="flex flex-wrap gap-2"></div>
+                            <div id="available-plates-toggles" class="space-y-2.5"></div>
                         </div>
                     </div>
                 </div>
@@ -277,6 +324,22 @@
             <!-- COLUMNA DERECHA: VISUALIZACIÓN GRÁFICA -->
             <div id="plate-calculator-right" class="space-y-4">
                 <div class="bg-dark-900 border border-dark-800 rounded-2xl p-4 flex flex-col space-y-4 h-full">
+                    
+                    <!-- BANNER DE PESO TOTAL EN VIVO (ESPECIALMENTE ÚTIL EN MODO ARMAR BARRA) -->
+                    <div class="bg-dark-950 border border-dark-800 rounded-2xl p-3.5 flex items-center justify-between">
+                        <div>
+                            <span id="live-total-banner-label" class="text-[10px] font-bold uppercase tracking-wider text-gold-400 block">Peso Total Cargado en Barra</span>
+                            <div class="flex items-baseline gap-2 mt-0.5">
+                                <span id="banner-total-primary" class="text-2xl sm:text-3xl font-mono font-extrabold text-white">60.0 kg</span>
+                                <span id="banner-total-secondary" class="text-sm font-mono text-zinc-400">/ 132.28 lb</span>
+                            </div>
+                        </div>
+                        <button id="use-reverse-weight-btn" onclick="transferReverseWeightToMain()" class="hidden px-3 py-2 rounded-xl bg-gold-500/20 hover:bg-gold-500 text-gold-400 hover:text-dark-950 border border-gold-500/30 font-bold text-xs transition flex items-center gap-1.5">
+                            <i data-lucide="arrow-up-left" class="w-3.5 h-3.5"></i>
+                            <span>Usar Peso</span>
+                        </button>
+                    </div>
+
                     <!-- VISUALIZADOR DE LA BARRA -->
                     <div class="relative bg-dark-950 border border-dark-800 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[210px] overflow-hidden">
                         <div id="cross-unit-alert" class="hidden mb-2 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-medium flex items-center gap-1">
@@ -303,6 +366,12 @@
                                 Total Real: <strong id="actual-loaded-total" class="text-white">60.0 kg / 132.3 lb</strong>
                                 <span id="weight-diff-badge" class="ml-1 text-[11px]"></span>
                             </div>
+                        </div>
+
+                        <!-- SUGERENCIAS CERCANAS SI EL PESO EXACTO NO ES POSIBLE CON LOS DISCOS ACTUALES -->
+                        <div id="closest-alternatives-bar" class="hidden w-full mt-2.5 pt-2.5 border-t border-dark-800/60 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                            <span class="text-zinc-400">Alternativas exactas:</span>
+                            <div id="closest-alternatives-btns" class="flex items-center gap-1.5"></div>
                         </div>
                     </div>
                     <!-- LISTA DETALLADA DE DISCOS -->
@@ -789,10 +858,12 @@
         const KG_TO_LB = 2.20462262185;
 
         // Estado Global de la App
-        let mainUnit = 'kg';           // Unidad del peso objetivo en pestaña 1 ('kg' | 'lb')
-        let equipmentMode = 'barbell'; // 'barbell' | 'machine' | 'free'
-        let plateInventoryUnit = 'kg'; // Unidad de los discos a cargar ('kg' | 'lb')
-        let collarWeightKg = 0;        // Peso del collarín por lado en kg
+        let mainUnit = 'kg';                 // Unidad del peso objetivo en pestaña 1 ('kg' | 'lb')
+        let calcDirection = 'targetToPlates';// 'targetToPlates' | 'platesToTarget'
+        let equipmentMode = 'barbell';       // 'barbell' | 'machine' | 'free'
+        let plateInventoryUnit = 'kg';       // 'kg' | 'lb' | 'mixed'
+        let collarWeightKg = 0;              // Peso del collarín por lado en kg
+        let customLoadedSidePlates = [];     // Discos cargados por lado en modo "Armar Barra"
 
         // Barras predefinidas
         const barPresets = [
@@ -810,22 +881,22 @@
         // Inventarios de Discos con colores IPF / Gimnasio y alturas visuales
         const platesCatalog = {
             kg: [
-                { weight: 25,   color: 'bg-red-600 border-red-400 text-white',       badge: 'bg-red-600 text-white',       h: 'h-36', w: 'w-6',   active: true },
-                { weight: 20,   color: 'bg-blue-600 border-blue-400 text-white',     badge: 'bg-blue-600 text-white',      h: 'h-36', w: 'w-5',   active: true },
-                { weight: 15,   color: 'bg-yellow-400 border-yellow-200 text-black', badge: 'bg-yellow-400 text-dark-950', h: 'h-32', w: 'w-5',   active: true },
-                { weight: 10,   color: 'bg-emerald-600 border-emerald-400 text-white',badge: 'bg-emerald-600 text-white',  h: 'h-28', w: 'w-4',   active: true },
-                { weight: 5,    color: 'bg-zinc-100 border-white text-dark-950',     badge: 'bg-zinc-100 text-dark-950',   h: 'h-24', w: 'w-3.5', active: true },
-                { weight: 2.5,  color: 'bg-rose-500 border-rose-300 text-white',     badge: 'bg-rose-500 text-white',      h: 'h-20', w: 'w-3',   active: true },
-                { weight: 1.25, color: 'bg-amber-500 border-amber-300 text-dark-950',badge: 'bg-amber-500 text-dark-950',  h: 'h-16', w: 'w-2.5', active: true }
+                { weight: 25,   unit: 'kg', color: 'bg-red-600 border-red-400 text-white',       badge: 'bg-red-600 text-white',       h: 'h-36', w: 'w-6',   active: true },
+                { weight: 20,   unit: 'kg', color: 'bg-blue-600 border-blue-400 text-white',     badge: 'bg-blue-600 text-white',      h: 'h-36', w: 'w-5',   active: true },
+                { weight: 15,   unit: 'kg', color: 'bg-yellow-400 border-yellow-200 text-black', badge: 'bg-yellow-400 text-dark-950', h: 'h-32', w: 'w-5',   active: true },
+                { weight: 10,   unit: 'kg', color: 'bg-emerald-600 border-emerald-400 text-white',badge: 'bg-emerald-600 text-white',  h: 'h-28', w: 'w-4',   active: true },
+                { weight: 5,    unit: 'kg', color: 'bg-zinc-100 border-white text-dark-950',     badge: 'bg-zinc-100 text-dark-950',   h: 'h-24', w: 'w-3.5', active: true },
+                { weight: 2.5,  unit: 'kg', color: 'bg-rose-500 border-rose-300 text-white',     badge: 'bg-rose-500 text-white',      h: 'h-20', w: 'w-3',   active: true },
+                { weight: 1.25, unit: 'kg', color: 'bg-amber-500 border-amber-300 text-dark-950',badge: 'bg-amber-500 text-dark-950',  h: 'h-16', w: 'w-2.5', active: true }
             ],
             lb: [
-                { weight: 45,   color: 'bg-blue-600 border-blue-400 text-white',     badge: 'bg-blue-600 text-white',      h: 'h-36', w: 'w-5',   active: true },
-                { weight: 35,   color: 'bg-yellow-400 border-yellow-200 text-black', badge: 'bg-yellow-400 text-dark-950', h: 'h-32', w: 'w-5',   active: true },
-                { weight: 25,   color: 'bg-emerald-600 border-emerald-400 text-white',badge: 'bg-emerald-600 text-white',  h: 'h-28', w: 'w-4',   active: true },
-                { weight: 15,   color: 'bg-orange-600 border-orange-400 text-white', badge: 'bg-orange-600 text-white',    h: 'h-24', w: 'w-4',   active: true },
-                { weight: 10,   color: 'bg-zinc-100 border-white text-dark-950',     badge: 'bg-zinc-100 text-dark-950',   h: 'h-20', w: 'w-3.5', active: true },
-                { weight: 5,    color: 'bg-rose-500 border-rose-300 text-white',     badge: 'bg-rose-500 text-white',      h: 'h-16', w: 'w-3',   active: true },
-                { weight: 2.5,  color: 'bg-amber-500 border-amber-300 text-dark-950',badge: 'bg-amber-500 text-dark-950',  h: 'h-12', w: 'w-2.5', active: true }
+                { weight: 45,   unit: 'lb', color: 'bg-blue-600 border-blue-400 text-white',     badge: 'bg-blue-600 text-white',      h: 'h-36', w: 'w-5',   active: true },
+                { weight: 35,   unit: 'lb', color: 'bg-yellow-400 border-yellow-200 text-black', badge: 'bg-yellow-400 text-dark-950', h: 'h-32', w: 'w-5',   active: true },
+                { weight: 25,   unit: 'lb', color: 'bg-emerald-600 border-emerald-400 text-white',badge: 'bg-emerald-600 text-white',  h: 'h-28', w: 'w-4',   active: true },
+                { weight: 15,   unit: 'lb', color: 'bg-orange-600 border-orange-400 text-white', badge: 'bg-orange-600 text-white',    h: 'h-24', w: 'w-4',   active: true },
+                { weight: 10,   unit: 'lb', color: 'bg-zinc-100 border-white text-dark-950',     badge: 'bg-zinc-100 text-dark-950',   h: 'h-20', w: 'w-3.5', active: true },
+                { weight: 5,    unit: 'lb', color: 'bg-rose-500 border-rose-300 text-white',     badge: 'bg-rose-500 text-white',      h: 'h-16', w: 'w-3',   active: true },
+                { weight: 2.5,  unit: 'lb', color: 'bg-amber-500 border-amber-300 text-dark-950',badge: 'bg-amber-500 text-dark-950',  h: 'h-12', w: 'w-2.5', active: true }
             ]
         };
 
@@ -888,6 +959,102 @@
         // ==========================================
         // SECCIÓN 1: CONVERSOR Y DISCOS
         // ==========================================
+        function setCalcDirection(dir) {
+            calcDirection = dir;
+            const btnTarget = document.getElementById('dir-btn-target');
+            const btnReverse = document.getElementById('dir-btn-reverse');
+            const targetCard = document.getElementById('target-weight-card');
+            const reverseCard = document.getElementById('reverse-builder-card');
+            const equipSelector = document.getElementById('equipment-mode-selector');
+            const invCard = document.getElementById('inventory-settings-card');
+            const useReverseBtn = document.getElementById('use-reverse-weight-btn');
+
+            if (dir === 'targetToPlates') {
+                btnTarget.className = 'py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition bg-gold-500 text-dark-950 shadow';
+                btnReverse.className = 'py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition text-zinc-400 hover:text-white';
+                targetCard.classList.remove('hidden');
+                reverseCard.classList.add('hidden');
+                equipSelector.classList.remove('hidden');
+                invCard.classList.remove('hidden');
+                useReverseBtn.classList.add('hidden');
+                handleMainWeightChange();
+            } else {
+                btnReverse.className = 'py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition bg-gold-500 text-dark-950 shadow';
+                btnTarget.className = 'py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition text-zinc-400 hover:text-white';
+                targetCard.classList.add('hidden');
+                reverseCard.classList.remove('hidden');
+                equipSelector.classList.add('hidden');
+                invCard.classList.add('hidden');
+                document.getElementById('free-weight-panel').classList.add('hidden');
+                document.getElementById('plate-calculator-left').classList.remove('hidden');
+                document.getElementById('plate-calculator-right').classList.remove('hidden');
+                useReverseBtn.classList.remove('hidden');
+                renderReverseBuilderButtons();
+                calculatePlates();
+            }
+        }
+
+        function renderReverseBuilderButtons() {
+            const kgGrid = document.getElementById('reverse-add-kg-grid');
+            const lbGrid = document.getElementById('reverse-add-lb-grid');
+
+            kgGrid.innerHTML = platesCatalog.kg.map(p => `
+                <button onclick="addCustomPlateToSide(${p.weight}, 'kg')" class="w-12 h-12 rounded-full font-mono text-xs font-extrabold flex flex-col items-center justify-center border-2 ${p.color} shadow-md active:scale-90 transition" title="Añadir disco de ${p.weight} kg por lado">
+                    <span>+${p.weight}</span>
+                    <span class="text-[9px] font-normal">kg</span>
+                </button>
+            `).join('');
+
+            lbGrid.innerHTML = platesCatalog.lb.map(p => `
+                <button onclick="addCustomPlateToSide(${p.weight}, 'lb')" class="w-12 h-12 rounded-full font-mono text-xs font-extrabold flex flex-col items-center justify-center border-2 ${p.color} shadow-md active:scale-90 transition" title="Añadir disco de ${p.weight} lb por lado">
+                    <span>+${p.weight}</span>
+                    <span class="text-[9px] font-normal">lb</span>
+                </button>
+            `).join('');
+        }
+
+        function addCustomPlateToSide(weight, unit) {
+            const catalogItem = platesCatalog[unit].find(p => p.weight === weight);
+            if (!catalogItem) return;
+
+            const existing = customLoadedSidePlates.find(p => p.weight === weight && p.unit === unit);
+            if (existing) {
+                existing.count += 1;
+            } else {
+                customLoadedSidePlates.push({ ...catalogItem, count: 1 });
+            }
+            // Ordenar de más pesado a más liviano según su masa real en kg
+            customLoadedSidePlates.sort((a, b) => {
+                const aKg = a.unit === 'kg' ? a.weight : a.weight / KG_TO_LB;
+                const bKg = b.unit === 'kg' ? b.weight : b.weight / KG_TO_LB;
+                return bKg - aKg;
+            });
+            calculatePlates();
+        }
+
+        function removeCustomPlateFromSide(weight, unit) {
+            const idx = customLoadedSidePlates.findIndex(p => p.weight === weight && p.unit === unit);
+            if (idx !== -1) {
+                customLoadedSidePlates[idx].count -= 1;
+                if (customLoadedSidePlates[idx].count <= 0) {
+                    customLoadedSidePlates.splice(idx, 1);
+                }
+                calculatePlates();
+            }
+        }
+
+        function clearCustomBarPlates() {
+            customLoadedSidePlates = [];
+            calculatePlates();
+        }
+
+        function transferReverseWeightToMain() {
+            const totalKg = getLastCalculatedTotalKg();
+            const valInMain = (mainUnit === 'kg') ? totalKg : (totalKg * KG_TO_LB);
+            document.getElementById('main-weight-input').value = fmtNum(valInMain, 2);
+            setCalcDirection('targetToPlates');
+        }
+
         function handleMainWeightChange() {
             const val = parseFloat(document.getElementById('main-weight-input').value) || 0;
             updateSimultaneousBadge(val);
@@ -1085,111 +1252,327 @@
             plateInventoryUnit = unit;
             const btnKg = document.getElementById('plate-unit-kg');
             const btnLb = document.getElementById('plate-unit-lb');
+            const btnMixed = document.getElementById('plate-unit-mixed');
+
+            [btnKg, btnLb, btnMixed].forEach(b => {
+                b.className = 'py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white';
+            });
+
             if (unit === 'kg') {
-                btnKg.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950';
-                btnLb.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white';
+                btnKg.className = 'py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950';
+            } else if (unit === 'lb') {
+                btnLb.className = 'py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950';
             } else {
-                btnLb.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950';
-                btnKg.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition text-zinc-400 hover:text-white';
+                btnMixed.className = 'py-1.5 px-2 rounded-lg text-xs font-mono font-bold transition bg-gold-500 text-dark-950';
             }
             renderAvailablePlatesToggles();
             calculatePlates();
         }
 
         function renderAvailablePlatesToggles() {
-            const list = platesCatalog[plateInventoryUnit];
             const container = document.getElementById('available-plates-toggles');
-            container.innerHTML = list.map((p, idx) => `
-                <button 
-                    onclick="togglePlateAvailability(${idx})" 
-                    class="w-12 h-12 rounded-full font-mono text-xs font-extrabold flex flex-col items-center justify-center border-2 transition ${p.active ? p.color + ' shadow-md scale-100' : 'bg-dark-950 border-dark-700 text-zinc-600 opacity-50 scale-95'}"
-                >
-                    <span>${p.weight}</span>
-                    <span class="text-[9px] font-normal">${plateInventoryUnit}</span>
-                </button>
-            `).join('');
+            if (plateInventoryUnit === 'mixed') {
+                const kgHtml = platesCatalog.kg.map((p, idx) => `
+                    <button onclick="togglePlateAvailability('kg', ${idx})" class="w-11 h-11 rounded-full font-mono text-[11px] font-extrabold flex flex-col items-center justify-center border-2 transition ${p.active ? p.color + ' shadow-md scale-100' : 'bg-dark-950 border-dark-700 text-zinc-600 opacity-40 scale-95'}">
+                        <span>${p.weight}</span>
+                        <span class="text-[8px] font-normal">kg</span>
+                    </button>
+                `).join('');
+                const lbHtml = platesCatalog.lb.map((p, idx) => `
+                    <button onclick="togglePlateAvailability('lb', ${idx})" class="w-11 h-11 rounded-full font-mono text-[11px] font-extrabold flex flex-col items-center justify-center border-2 transition ${p.active ? p.color + ' shadow-md scale-100' : 'bg-dark-950 border-dark-700 text-zinc-600 opacity-40 scale-95'}">
+                        <span>${p.weight}</span>
+                        <span class="text-[8px] font-normal">lb</span>
+                    </button>
+                `).join('');
+                container.innerHTML = `
+                    <div>
+                        <span class="text-[10px] font-mono uppercase text-zinc-400 block mb-1.5">Discos en Kilos (KG):</span>
+                        <div class="flex flex-wrap gap-1.5">${kgHtml}</div>
+                    </div>
+                    <div class="pt-2 border-t border-dark-800/60">
+                        <span class="text-[10px] font-mono uppercase text-zinc-400 block mb-1.5">Discos en Libras (LB):</span>
+                        <div class="flex flex-wrap gap-1.5">${lbHtml}</div>
+                    </div>
+                `;
+            } else {
+                const list = platesCatalog[plateInventoryUnit];
+                container.innerHTML = `<div class="flex flex-wrap gap-2">` + list.map((p, idx) => `
+                    <button 
+                        onclick="togglePlateAvailability('${plateInventoryUnit}', ${idx})" 
+                        class="w-12 h-12 rounded-full font-mono text-xs font-extrabold flex flex-col items-center justify-center border-2 transition ${p.active ? p.color + ' shadow-md scale-100' : 'bg-dark-950 border-dark-700 text-zinc-600 opacity-50 scale-95'}"
+                    >
+                        <span>${p.weight}</span>
+                        <span class="text-[9px] font-normal">${plateInventoryUnit}</span>
+                    </button>
+                `).join('') + `</div>`;
+            }
         }
 
-        function togglePlateAvailability(idx) {
-            platesCatalog[plateInventoryUnit][idx].active = !platesCatalog[plateInventoryUnit][idx].active;
+        function togglePlateAvailability(unitKey, idx) {
+            platesCatalog[unitKey][idx].active = !platesCatalog[unitKey][idx].active;
             renderAvailablePlatesToggles();
             calculatePlates();
         }
 
         function resetAvailablePlates() {
-            platesCatalog[plateInventoryUnit].forEach(p => p.active = true);
+            if (plateInventoryUnit === 'mixed') {
+                platesCatalog.kg.forEach(p => p.active = true);
+                platesCatalog.lb.forEach(p => p.active = true);
+            } else {
+                platesCatalog[plateInventoryUnit].forEach(p => p.active = true);
+            }
             renderAvailablePlatesToggles();
             calculatePlates();
         }
 
-        // CÁLCULO CENTRAL DE DISCOS (SOPORTA OBJETIVO EN KG CON DISCOS EN LB Y VICEVERSA)
+        // ==========================================
+        // ALGORITMO ÓPTIMO DE COMBINACIÓN DE DISCOS (SUBSET-SUM / DP)
+        // Soluciona el error Greedy (ej: para 20 lb por lado prefiere 2x10 lb = 20 lb en vez de 1x15 lb)
+        // ==========================================
+        function findOptimalPlateCombination(targetSideWeight, availablePlates, maxPlatesPerSide = 10) {
+            if (targetSideWeight <= 0.001 || availablePlates.length === 0) {
+                return { combo: [], loadedWeight: 0, lowerAlt: null, higherAlt: null };
+            }
+
+            let bestCombo = [];
+            let bestWeight = 0;
+            let bestDiff = targetSideWeight; // Empezar con 0 discos cargados
+            let bestCount = 0;
+
+            let closestLowerWeight = 0;
+            let closestHigherWeight = Infinity;
+
+            // Ordenar candidatos de mayor a menor valor numérico en la unidad base de cálculo
+            const sortedPlates = [...availablePlates].sort((a, b) => b.valInBase - a.valInBase);
+            const currentCounts = new Array(sortedPlates.length).fill(0);
+
+            function dfs(idx, currentWeight, totalPlatesUsed) {
+                const diff = Math.abs(currentWeight - targetSideWeight);
+
+                // Registrar alternativas inferiores y superiores alcanzables
+                if (currentWeight < targetSideWeight - 0.01 && currentWeight > closestLowerWeight) {
+                    closestLowerWeight = currentWeight;
+                }
+                if (currentWeight > targetSideWeight + 0.01 && currentWeight < closestHigherWeight) {
+                    closestHigherWeight = currentWeight;
+                }
+
+                // Evaluar si esta combinación es más cercana al peso objetivo
+                // Prioridad 1: Menor diferencia absoluta al objetivo
+                // Prioridad 2: En caso de empate (< 0.005), usar la menor cantidad de discos
+                if (diff < bestDiff - 0.005 || (Math.abs(diff - bestDiff) <= 0.005 && totalPlatesUsed < bestCount)) {
+                    bestDiff = diff;
+                    bestWeight = currentWeight;
+                    bestCount = totalPlatesUsed;
+                    bestCombo = [];
+                    for (let i = 0; i < sortedPlates.length; i++) {
+                        if (currentCounts[i] > 0) {
+                            bestCombo.push({ ...sortedPlates[i], count: currentCounts[i] });
+                        }
+                    }
+                }
+
+                if (idx >= sortedPlates.length || totalPlatesUsed >= maxPlatesPerSide) return;
+
+                const plate = sortedPlates[idx];
+                const remainingCapacity = maxPlatesPerSide - totalPlatesUsed;
+                // Permitir pasar ligeramente por encima del objetivo (1 disco extra) para ver si queda más cerca
+                const maxUsefulCount = Math.min(
+                    remainingCapacity,
+                    Math.ceil((targetSideWeight - currentWeight + plate.valInBase * 0.9) / plate.valInBase)
+                );
+                const limit = Math.max(0, Math.min(remainingCapacity, maxUsefulCount));
+
+                for (let c = limit; c >= 0; c--) {
+                    const nextWeight = currentWeight + c * plate.valInBase;
+                    // Poda: si ya nos pasamos por más que el mejor error encontrado, no seguir sumando
+                    if (nextWeight - targetSideWeight > bestDiff + 0.05 && c > 0) continue;
+
+                    currentCounts[idx] = c;
+                    dfs(idx + 1, nextWeight, totalPlatesUsed + c);
+                }
+                currentCounts[idx] = 0;
+            }
+
+            dfs(0, 0, 0);
+
+            return {
+                combo: bestCombo,
+                loadedWeight: bestWeight,
+                lowerAlt: closestLowerWeight > 0 ? closestLowerWeight : null,
+                higherAlt: closestHigherWeight < Infinity ? closestHigherWeight : null
+            };
+        }
+
+        let lastCalculatedTotalKg = 60;
+        function getLastCalculatedTotalKg() {
+            return lastCalculatedTotalKg;
+        }
+
+        // CÁLCULO CENTRAL DE DISCOS (SOPORTA ÓPTIMO PESO->DISCOS, MIXTOS KG+LB Y MODO ARMAR BARRA)
         function calculatePlates() {
             const rawTarget = parseFloat(document.getElementById('main-weight-input').value) || 0;
-            
-            // Avisar si el objetivo está en una unidad distinta a los discos
             const crossAlert = document.getElementById('cross-unit-alert');
-            if (mainUnit !== plateInventoryUnit) {
-                crossAlert.classList.remove('hidden');
-                document.getElementById('cross-unit-text').textContent = 
-                    `Objetivo en ${mainUnit.toUpperCase()} (${rawTarget} ${mainUnit}) → Cargando con discos en ${plateInventoryUnit.toUpperCase()}`;
-            } else {
-                crossAlert.classList.add('hidden');
-            }
+            const altBar = document.getElementById('closest-alternatives-bar');
+            const altBtns = document.getElementById('closest-alternatives-btns');
 
-            // Convertimos todo a la unidad de los discos que se van a cargar en la barra
-            const targetInPlateUnit = (mainUnit === plateInventoryUnit)
-                ? rawTarget
-                : (mainUnit === 'kg' ? rawTarget * KG_TO_LB : rawTarget / KG_TO_LB);
-
-            // Peso de la barra + collarines en la unidad de los discos
-            // Nota: en los gimnasios con discos en LB, la barra olímpica de 20kg se suele contar como 45 lb si es estándar
-            let barAndCollarInPlateUnit = 0;
+            // Calcular peso de barra + collarines en KG y LB
             const totalCollarsKg = collarWeightKg * 2;
-            if (plateInventoryUnit === 'kg') {
-                barAndCollarInPlateUnit = currentBarWeightKg + totalCollarsKg;
+            const preset = barPresets.find(b => b.id === selectedBarId);
+            const barKg = currentBarWeightKg + totalCollarsKg;
+            const barLb = (preset ? preset.lb : (currentBarWeightKg * KG_TO_LB)) + (totalCollarsKg * KG_TO_LB);
+
+            let loadedPerSide = [];
+            let actualTotalKg = 0;
+            let actualTotalLb = 0;
+            let actualSideKg = 0;
+            let actualSideLb = 0;
+
+            if (calcDirection === 'platesToTarget') {
+                // ==========================================
+                // MODO 2: DISCOS -> PESO (ARMAR BARRA MANUALMENTE)
+                // ==========================================
+                crossAlert.classList.add('hidden');
+                altBar.classList.add('hidden');
+                loadedPerSide = [...customLoadedSidePlates];
+
+                loadedPerSide.forEach(item => {
+                    if (item.unit === 'kg') {
+                        actualSideKg += item.weight * item.count;
+                        actualSideLb += (item.weight * KG_TO_LB) * item.count;
+                    } else {
+                        actualSideLb += item.weight * item.count;
+                        actualSideKg += (item.weight / KG_TO_LB) * item.count;
+                    }
+                });
+
+                actualTotalKg = barKg + (actualSideKg * 2);
+                actualTotalLb = (plateInventoryUnit === 'lb' ? barLb : barKg * KG_TO_LB) + (actualSideLb * 2);
+                document.getElementById('live-total-banner-label').textContent = 'Peso Total Armado (Barra + Discos)';
             } else {
-                const preset = barPresets.find(b => b.id === selectedBarId);
-                const barLb = preset ? preset.lb : (currentBarWeightKg * KG_TO_LB);
-                barAndCollarInPlateUnit = barLb + (totalCollarsKg * KG_TO_LB);
-            }
+                // ==========================================
+                // MODO 1: PESO -> DISCOS (ALGORITMO ÓPTIMO)
+                // ==========================================
+                document.getElementById('live-total-banner-label').textContent = 'Peso Real Cargado en Barra';
 
-            let weightToLoadTotal = Math.max(0, targetInPlateUnit - barAndCollarInPlateUnit);
-            let targetPerSide = weightToLoadTotal / 2;
+                if (plateInventoryUnit === 'mixed') {
+                    crossAlert.classList.remove('hidden');
+                    document.getElementById('cross-unit-text').textContent = 
+                        `Modo Mixto Activo: Combinando discos en KG y LB para máxima exactitud`;
 
-            // Algoritmo Greedy para elegir los discos por lado
-            const availablePlates = platesCatalog[plateInventoryUnit].filter(p => p.active);
-            const loadedPerSide = [];
-            let remainingSide = targetPerSide + 0.001; // tolerancia coma flotante
+                    const targetKg = (mainUnit === 'kg') ? rawTarget : (rawTarget / KG_TO_LB);
+                    const targetSideKg = Math.max(0, (targetKg - barKg) / 2);
 
-            for (const plate of availablePlates) {
-                const count = Math.floor(remainingSide / plate.weight);
-                if (count > 0) {
-                    loadedPerSide.push({ ...plate, count });
-                    remainingSide -= count * plate.weight;
+                    const candidates = [
+                        ...platesCatalog.kg.filter(p => p.active).map(p => ({ ...p, valInBase: p.weight })),
+                        ...platesCatalog.lb.filter(p => p.active).map(p => ({ ...p, valInBase: p.weight / KG_TO_LB }))
+                    ];
+
+                    const res = findOptimalPlateCombination(targetSideKg, candidates, 8);
+                    loadedPerSide = res.combo;
+
+                    loadedPerSide.forEach(item => {
+                        if (item.unit === 'kg') {
+                            actualSideKg += item.weight * item.count;
+                            actualSideLb += (item.weight * KG_TO_LB) * item.count;
+                        } else {
+                            actualSideLb += item.weight * item.count;
+                            actualSideKg += (item.weight / KG_TO_LB) * item.count;
+                        }
+                    });
+                    actualTotalKg = barKg + (actualSideKg * 2);
+                    actualTotalLb = actualTotalKg * KG_TO_LB;
+                    altBar.classList.add('hidden');
+
+                } else {
+                    // Inventario en una sola unidad ('kg' o 'lb')
+                    if (mainUnit !== plateInventoryUnit) {
+                        crossAlert.classList.remove('hidden');
+                        document.getElementById('cross-unit-text').textContent = 
+                            `Objetivo en ${mainUnit.toUpperCase()} (${rawTarget} ${mainUnit}) → Cargando con discos en ${plateInventoryUnit.toUpperCase()}`;
+                    } else {
+                        crossAlert.classList.add('hidden');
+                    }
+
+                    const targetInPlateUnit = (mainUnit === plateInventoryUnit)
+                        ? rawTarget
+                        : (mainUnit === 'kg' ? rawTarget * KG_TO_LB : rawTarget / KG_TO_LB);
+
+                    const barAndCollarInPlateUnit = (plateInventoryUnit === 'kg') ? barKg : barLb;
+                    const weightToLoadTotal = Math.max(0, targetInPlateUnit - barAndCollarInPlateUnit);
+                    const targetPerSide = weightToLoadTotal / 2;
+
+                    const candidates = platesCatalog[plateInventoryUnit]
+                        .filter(p => p.active)
+                        .map(p => ({ ...p, valInBase: p.weight }));
+
+                    const res = findOptimalPlateCombination(targetPerSide, candidates, 10);
+                    loadedPerSide = res.combo;
+
+                    const actualSideInPlateUnit = res.loadedWeight;
+                    const actualTotalInPlateUnit = barAndCollarInPlateUnit + (actualSideInPlateUnit * 2);
+
+                    if (plateInventoryUnit === 'kg') {
+                        actualSideKg = actualSideInPlateUnit;
+                        actualSideLb = actualSideInPlateUnit * KG_TO_LB;
+                        actualTotalKg = actualTotalInPlateUnit;
+                        actualTotalLb = actualTotalInPlateUnit * KG_TO_LB;
+                    } else {
+                        actualSideLb = actualSideInPlateUnit;
+                        actualSideKg = actualSideInPlateUnit / KG_TO_LB;
+                        actualTotalLb = actualTotalInPlateUnit;
+                        actualTotalKg = actualTotalInPlateUnit / KG_TO_LB;
+                    }
+
+                    // Mostrar botones de alternativas exactas si el peso objetivo no es exacto
+                    const diffInPlateUnit = Math.abs(actualTotalInPlateUnit - targetInPlateUnit);
+                    if (diffInPlateUnit > 0.1 && (res.lowerAlt !== null || res.higherAlt !== null)) {
+                        altBar.classList.remove('hidden');
+                        let btnsHtml = '';
+                        if (res.lowerAlt !== null) {
+                            const lowTotal = barAndCollarInPlateUnit + res.lowerAlt * 2;
+                            btnsHtml += `<button onclick="applySuggestedWeight(${lowTotal}, '${plateInventoryUnit}')" class="px-2 py-0.5 rounded bg-dark-800 hover:bg-gold-500 hover:text-dark-950 text-zinc-300 font-mono transition">${fmtNum(lowTotal, 1)} ${plateInventoryUnit}</button>`;
+                        }
+                        if (res.higherAlt !== null) {
+                            const highTotal = barAndCollarInPlateUnit + res.higherAlt * 2;
+                            btnsHtml += `<button onclick="applySuggestedWeight(${highTotal}, '${plateInventoryUnit}')" class="px-2 py-0.5 rounded bg-dark-800 hover:bg-gold-500 hover:text-dark-950 text-zinc-300 font-mono transition">${fmtNum(highTotal, 1)} ${plateInventoryUnit}</button>`;
+                        }
+                        altBtns.innerHTML = btnsHtml;
+                    } else {
+                        altBar.classList.add('hidden');
+                    }
                 }
             }
 
-            // Calcular peso real cargado por lado
-            const actualSideWeight = loadedPerSide.reduce((acc, p) => acc + (p.weight * p.count), 0);
-            const actualTotalInPlateUnit = barAndCollarInPlateUnit + (actualSideWeight * 2);
+            lastCalculatedTotalKg = actualTotalKg;
 
-            const actualTotalKg = (plateInventoryUnit === 'kg') ? actualTotalInPlateUnit : (actualTotalInPlateUnit / KG_TO_LB);
-            const actualTotalLb = (plateInventoryUnit === 'lb') ? actualTotalInPlateUnit : (actualTotalInPlateUnit * KG_TO_LB);
+            // Actualizar Banner Superior de Peso en Vivo
+            if (mainUnit === 'kg') {
+                document.getElementById('banner-total-primary').textContent = `${fmtNum(actualTotalKg, 2)} kg`;
+                document.getElementById('banner-total-secondary').textContent = `/ ${fmtNum(actualTotalLb, 2)} lb`;
+            } else {
+                document.getElementById('banner-total-primary').textContent = `${fmtNum(actualTotalLb, 2)} lb`;
+                document.getElementById('banner-total-secondary').textContent = `/ ${fmtNum(actualTotalKg, 2)} kg`;
+            }
 
-            // Actualizar etiquetas del visualizador
-            const sideOtherUnit = (plateInventoryUnit === 'kg') ? `${fmtNum(actualSideWeight * KG_TO_LB, 1)} lb` : `${fmtNum(actualSideWeight / KG_TO_LB, 1)} kg`;
-            document.getElementById('per-side-weight').textContent = `${fmtNum(actualSideWeight, 2)} ${plateInventoryUnit} (${sideOtherUnit})`;
+            // Actualizar etiquetas inferiores del visualizador
+            document.getElementById('per-side-weight').textContent = `${fmtNum(actualSideKg, 2)} kg (${fmtNum(actualSideLb, 1)} lb)`;
             document.getElementById('actual-loaded-total').textContent = `${fmtNum(actualTotalKg, 1)} kg / ${fmtNum(actualTotalLb, 1)} lb`;
 
             // Diferencia con el peso objetivo
-            const targetKg = (mainUnit === 'kg') ? rawTarget : (rawTarget / KG_TO_LB);
-            const diffKg = actualTotalKg - targetKg;
             const diffBadge = document.getElementById('weight-diff-badge');
-            if (Math.abs(diffKg) < 0.15) {
-                diffBadge.innerHTML = `<span class="text-emerald-400">(Exacto)</span>`;
+            if (calcDirection === 'platesToTarget') {
+                diffBadge.innerHTML = `<span class="text-gold-400">(Modo Manual)</span>`;
             } else {
-                const sign = diffKg > 0 ? '+' : '';
-                diffBadge.innerHTML = `<span class="text-amber-400">(${sign}${fmtNum(diffKg, 1)} kg)</span>`;
+                const targetKg = (mainUnit === 'kg') ? rawTarget : (rawTarget / KG_TO_LB);
+                const diffKg = actualTotalKg - targetKg;
+                if (Math.abs(diffKg) < 0.12) {
+                    diffBadge.innerHTML = `<span class="text-emerald-400">(Exacto)</span>`;
+                } else {
+                    const sign = diffKg > 0 ? '+' : '';
+                    const diffLb = diffKg * KG_TO_LB;
+                    diffBadge.innerHTML = `<span class="text-amber-400">(${sign}${fmtNum(diffKg, 1)} kg / ${sign}${fmtNum(diffLb, 1)} lb)</span>`;
+                }
             }
 
             // Dibujar los discos en la barra gráfica
@@ -1202,9 +1585,14 @@
                 loadedPerSide.forEach(item => {
                     for (let i = 0; i < Math.min(item.count, 8); i++) {
                         const plateDiv = document.createElement('div');
-                        plateDiv.className = `${item.h} ${item.w} ${item.color} border rounded-md plate-shadow flex flex-col items-center justify-between py-1.5 font-mono font-extrabold text-[10px] select-none transition-all`;
+                        const clickableClass = calcDirection === 'platesToTarget' ? 'cursor-pointer hover:opacity-80 active:scale-95' : '';
+                        plateDiv.className = `${item.h} ${item.w} ${item.color} ${clickableClass} border rounded-md plate-shadow flex flex-col items-center justify-between py-1.5 font-mono font-extrabold text-[10px] select-none transition-all`;
+                        if (calcDirection === 'platesToTarget') {
+                            plateDiv.title = `Toca para quitar 1 disco de ${item.weight} ${item.unit}`;
+                            plateDiv.onclick = () => removeCustomPlateFromSide(item.weight, item.unit);
+                        }
                         plateDiv.innerHTML = `
-                            <span class="opacity-40">•</span>
+                            <span class="text-[7px] uppercase opacity-75">${item.unit}</span>
                             <span class="tracking-tighter">${item.weight}</span>
                         `;
                         stackContainer.appendChild(plateDiv);
@@ -1220,27 +1608,32 @@
                 collarEl.classList.add('hidden');
             }
 
-            // Renderizar tarjetas de desglose de discos (Estilo Captura 4)
+            // Renderizar tarjetas de desglose de discos
             const breakdownContainer = document.getElementById('plates-breakdown-list');
             if (loadedPerSide.length === 0) {
                 breakdownContainer.innerHTML = `
                     <div class="bg-dark-950 border border-dark-800 rounded-xl p-3 text-center text-xs text-zinc-400">
-                        El peso objetivo es igual o menor al peso de la barra seleccionada.
+                        ${calcDirection === 'platesToTarget' ? 'Toca los discos de arriba para empezar a cargar la barra.' : 'El peso objetivo es igual o menor al peso de la barra seleccionada.'}
                     </div>
                 `;
             } else {
                 breakdownContainer.innerHTML = loadedPerSide.map(item => {
                     const totalSidePlate = item.weight * item.count;
-                    const convSingle = (plateInventoryUnit === 'kg')
+                    const convSingle = (item.unit === 'kg')
                         ? `${fmtNum(item.weight * KG_TO_LB, 1)} lb c/u`
                         : `${fmtNum(item.weight / KG_TO_LB, 1)} kg c/u`;
+
+                    const removeBtnHtml = calcDirection === 'platesToTarget'
+                        ? `<button onclick="removeCustomPlateFromSide(${item.weight}, '${item.unit}')" class="ml-2 p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/30 text-rose-400 text-xs font-bold transition" title="Quitar 1 por lado">-1</button>`
+                        : '';
+
                     return `
                         <div class="bg-dark-950 border border-dark-800 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <span class="w-3 h-8 rounded-sm ${item.badge} inline-block"></span>
                                 <div>
                                     <div class="font-mono font-bold text-base text-white">
-                                        ${item.weight} <span class="text-xs font-normal text-zinc-400">${plateInventoryUnit}</span>
+                                        ${item.weight} <span class="text-xs font-bold text-gold-400 uppercase">${item.unit}</span>
                                         <span class="text-[11px] font-normal text-zinc-500 ml-1">(${convSingle})</span>
                                     </div>
                                 </div>
@@ -1248,8 +1641,11 @@
                             <div class="font-mono text-sm text-zinc-300">
                                 × <strong class="text-white text-base">${item.count}</strong> por lado
                             </div>
-                            <div class="font-mono font-bold text-sm text-gold-400">
-                                ${fmtNum(totalSidePlate, 2)} ${plateInventoryUnit}
+                            <div class="flex items-center">
+                                <div class="font-mono font-bold text-sm text-gold-400">
+                                    ${fmtNum(totalSidePlate, 2)} ${item.unit}
+                                </div>
+                                ${removeBtnHtml}
                             </div>
                         </div>
                     `;
@@ -1257,11 +1653,19 @@
             }
         }
 
+        function applySuggestedWeight(weightVal, unit) {
+            mainUnit = unit;
+            document.getElementById('main-unit-label').textContent = unit;
+            document.getElementById('main-weight-input').value = fmtNum(weightVal, 2);
+            handleMainWeightChange();
+        }
+
         // Enviar cualquier peso directamente a la calculadora de discos
         function sendWeightToPlates(weightVal, unit) {
             mainUnit = unit;
             document.getElementById('main-unit-label').textContent = unit;
             document.getElementById('main-weight-input').value = fmtNum(weightVal, 1);
+            setCalcDirection('targetToPlates');
             setEquipmentMode('barbell');
             switchTab('plates');
             handleMainWeightChange();
@@ -1749,6 +2153,7 @@
             lucide.createIcons();
             renderBarPresets();
             renderAvailablePlatesToggles();
+            renderReverseBuilderButtons();
             renderQuickDumbbellGrid();
             renderRIRButtons();
             handleMainWeightChange();
